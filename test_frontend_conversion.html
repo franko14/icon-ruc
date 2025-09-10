@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Precipitation Rate Conversion</title>
+</head>
+<body>
+    <h1>Precipitation Rate Conversion Test</h1>
+    <div id="results"></div>
+
+    <script>
+        // Copy the conversion functions from the main dashboard
+        function calculateTimeStepMinutes(timeArray) {
+            if (timeArray.length < 2) return 60; // Default to 1 hour if can't calculate
+            
+            const time1 = new Date(timeArray[0]);
+            const time2 = new Date(timeArray[1]);
+            const diffMinutes = (time2.getTime() - time1.getTime()) / (1000 * 60);
+            return diffMinutes;
+        }
+
+        function convertToHourlyRate(values, timeArray) {
+            if (!timeArray || timeArray.length < 2) return values;
+            
+            const timeStepMinutes = calculateTimeStepMinutes(timeArray);
+            const conversionFactor = 60 / timeStepMinutes; // Convert to hourly rate
+            
+            console.log(`Converting precipitation: ${timeStepMinutes}min intervals → ×${conversionFactor} to show mm/1h equivalent`);
+            
+            // Apply conversion factor to scale to "mm/h if this rate continued"
+            return values.map(value => value * conversionFactor);
+        }
+
+        // Test with 5-minute intervals (typical ICON-D2-RUC-EPS data)
+        function runTests() {
+            const results = document.getElementById('results');
+            
+            // Test 1: 5-minute intervals
+            const times5min = [
+                '2025-01-15T10:00:00',
+                '2025-01-15T10:05:00',
+                '2025-01-15T10:10:00',
+                '2025-01-15T10:15:00'
+            ];
+            
+            const values5min = [0.1, 0.05, 0.2, 0.0]; // mm/5min
+            const converted5min = convertToHourlyRate(values5min, times5min);
+            
+            results.innerHTML += `
+                <h3>Test 1: 5-minute intervals</h3>
+                <p><strong>Time step:</strong> 5 minutes</p>
+                <p><strong>Conversion factor:</strong> ×12</p>
+                <p><strong>Original values (mm/5min):</strong> ${values5min.join(', ')}</p>
+                <p><strong>Converted values (mm/1h equivalent):</strong> ${converted5min.join(', ')}</p>
+                <p><strong>Expected:</strong> ${values5min.map(v => v * 12).join(', ')}</p>
+                <p><strong>✅ Correct:</strong> ${JSON.stringify(converted5min) === JSON.stringify(values5min.map(v => v * 12))}</p>
+                <hr>
+            `;
+            
+            // Test 2: 15-minute intervals
+            const times15min = [
+                '2025-01-15T10:00:00',
+                '2025-01-15T10:15:00',
+                '2025-01-15T10:30:00'
+            ];
+            
+            const values15min = [0.3, 0.1, 0.4]; // mm/15min
+            const converted15min = convertToHourlyRate(values15min, times15min);
+            
+            results.innerHTML += `
+                <h3>Test 2: 15-minute intervals</h3>
+                <p><strong>Time step:</strong> 15 minutes</p>
+                <p><strong>Conversion factor:</strong> ×4</p>
+                <p><strong>Original values (mm/15min):</strong> ${values15min.join(', ')}</p>
+                <p><strong>Converted values (mm/1h equivalent):</strong> ${converted15min.join(', ')}</p>
+                <p><strong>Expected:</strong> ${values15min.map(v => v * 4).join(', ')}</p>
+                <p><strong>✅ Correct:</strong> ${JSON.stringify(converted15min) === JSON.stringify(values15min.map(v => v * 4))}</p>
+                <hr>
+            `;
+            
+            // Real-world example
+            results.innerHTML += `
+                <h3>Real-world Example</h3>
+                <p><strong>Scenario:</strong> Light rain at 0.05 mm/5min</p>
+                <p><strong>Raw data shows:</strong> 0.05 mm/5min</p>
+                <p><strong>User sees:</strong> ${0.05 * 12} mm/1h equivalent</p>
+                <p><strong>Interpretation:</strong> "If this rate continued for 1 hour, you'd get ${0.05 * 12} mm of rain"</p>
+                <br>
+                <p><strong>Scenario:</strong> Heavy rain at 0.5 mm/5min</p>
+                <p><strong>Raw data shows:</strong> 0.5 mm/5min</p>
+                <p><strong>User sees:</strong> ${0.5 * 12} mm/1h equivalent</p>
+                <p><strong>Interpretation:</strong> "If this rate continued for 1 hour, you'd get ${0.5 * 12} mm of rain"</p>
+            `;
+        }
+
+        // Run tests when page loads
+        runTests();
+    </script>
+</body>
+</html>

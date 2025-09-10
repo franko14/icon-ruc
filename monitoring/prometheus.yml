@@ -1,0 +1,84 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'icon-ruc-production'
+    environment: 'production'
+
+rule_files:
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Main application metrics
+  - job_name: 'icon-ruc-app'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['app:5000']
+    metrics_path: '/metrics'
+    scrape_timeout: 5s
+
+  # PostgreSQL metrics (using postgres_exporter)
+  - job_name: 'postgres'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['postgres_exporter:9187']
+
+  # Redis metrics (using redis_exporter)
+  - job_name: 'redis'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['redis_exporter:9121']
+
+  # Nginx metrics
+  - job_name: 'nginx'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['nginx:8080']
+    metrics_path: '/nginx_status'
+
+  # Node exporter for system metrics
+  - job_name: 'node-exporter'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['node_exporter:9100']
+
+  # cAdvisor for container metrics
+  - job_name: 'cadvisor'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Blackbox exporter for external service monitoring
+  - job_name: 'blackbox-http'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+        - https://opendata.dwd.de  # DWD data source
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox_exporter:9115
+
+# Remote write configuration for long-term storage (optional)
+# remote_write:
+#   - url: "https://prometheus-remote-write-endpoint.com/api/v1/write"
+#     basic_auth:
+#       username: "username"
+#       password: "password"

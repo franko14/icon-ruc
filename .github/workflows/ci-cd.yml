@@ -1,0 +1,282 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  release:
+    types: [ published ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: test_user
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libeccodes-dev libhdf5-dev libnetcdf-dev pkg-config
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-prod.txt
+        pip install -r requirements-dev.txt
+
+    - name: Run code quality checks
+      run: |
+        black --check .
+        flake8 --max-line-length=88 --extend-ignore=E203,W503 .
+        mypy . --ignore-missing-imports
+
+    - name: Run security checks
+      run: |
+        pip install bandit safety
+        bandit -r . -x ./icon-env/
+        safety check
+
+    - name: Run tests with coverage
+      env:
+        DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+        REDIS_URL: redis://localhost:6379/0
+        FLASK_ENV: testing
+      run: |
+        pytest --cov=. --cov-report=xml --cov-report=html tests/
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+
+  build:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name != 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        target: production
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [test, build]
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Deploy to staging server
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.STAGING_HOST }}
+        username: ${{ secrets.STAGING_USER }}
+        key: ${{ secrets.STAGING_SSH_KEY }}
+        script: |
+          cd /opt/icon-ruc-staging
+          git pull origin develop
+          docker-compose pull
+          docker-compose up -d --force-recreate
+          docker system prune -f
+
+    - name: Run smoke tests
+      run: |
+        sleep 30  # Wait for services to start
+        curl -f ${{ secrets.STAGING_URL }}/api/health || exit 1
+        curl -f ${{ secrets.STAGING_URL }}/api/variables || exit 1
+
+    - name: Notify deployment
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        text: "Staging deployment completed for ${{ github.sha }}"
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+      if: always()
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [test, build]
+    if: github.event_name == 'release'
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Create deployment artifacts
+      run: |
+        mkdir -p deploy
+        cp docker-compose.yml deploy/
+        cp -r nginx deploy/
+        cp -r monitoring deploy/
+        tar -czf deploy.tar.gz deploy/
+
+    - name: Upload deployment artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: deployment-${{ github.sha }}
+        path: deploy.tar.gz
+
+    - name: Deploy to production
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.PROD_HOST }}
+        username: ${{ secrets.PROD_USER }}
+        key: ${{ secrets.PROD_SSH_KEY }}
+        script: |
+          cd /opt/icon-ruc-prod
+          
+          # Backup current deployment
+          docker-compose exec -T db pg_dump -U iconuser iconruc > backup-$(date +%Y%m%d-%H%M%S).sql
+          
+          # Update application
+          git pull origin main
+          docker-compose pull
+          
+          # Rolling update with health checks
+          docker-compose up -d db redis
+          sleep 10
+          docker-compose up -d app --scale app=2
+          sleep 30
+          
+          # Health check
+          for i in {1..10}; do
+            if curl -f http://localhost:5000/api/health; then
+              echo "Health check passed"
+              break
+            fi
+            sleep 5
+            if [ $i -eq 10 ]; then
+              echo "Health check failed"
+              exit 1
+            fi
+          done
+          
+          # Update nginx
+          docker-compose up -d nginx
+          
+          # Cleanup old containers
+          docker system prune -f
+
+    - name: Run production smoke tests
+      run: |
+        sleep 60  # Wait for full deployment
+        curl -f ${{ secrets.PROD_URL }}/api/health || exit 1
+        curl -f ${{ secrets.PROD_URL }}/api/variables || exit 1
+
+    - name: Notify production deployment
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        text: "Production deployment completed for release ${{ github.event.release.tag_name }}"
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+      if: always()
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+    - name: Run CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+      with:
+        languages: python

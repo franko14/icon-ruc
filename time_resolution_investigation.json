@@ -1,0 +1,423 @@
+{
+  "investigation_time": "2025-08-30T11:31:58.051128",
+  "variables_analyzed": [
+    "TOT_PREC",
+    "VMAX_10M"
+  ],
+  "summary": {
+    "TOT_PREC": {
+      "typical_steps": 169,
+      "step_range": "18-169",
+      "time_intervals_minutes": [
+        5
+      ],
+      "most_common_interval": 5
+    },
+    "VMAX_10M": {
+      "typical_steps": 2,
+      "step_range": "2-15",
+      "time_intervals_minutes": [
+        60
+      ],
+      "most_common_interval": 60
+    }
+  },
+  "detailed_results": {
+    "TOT_PREC": {
+      "2025-08-30T09%3A00": {
+        "readable_time": "2025-08-30T09:00",
+        "ensembles": [
+          "01",
+          "02"
+        ],
+        "analysis": {
+          "total_steps": 18,
+          "time_range_minutes": 85,
+          "time_range_hours": 1.4166666666666667,
+          "start_time_minutes": 0,
+          "end_time_minutes": 85,
+          "unique_intervals_minutes": [
+            5
+          ],
+          "interval_counts": {
+            "5": 17
+          },
+          "most_common_interval": 5,
+          "first_few_steps": [
+            "PT000H00M.grib2",
+            "PT000H05M.grib2",
+            "PT000H10M.grib2",
+            "PT000H15M.grib2",
+            "PT000H20M.grib2",
+            "PT000H25M.grib2",
+            "PT000H30M.grib2",
+            "PT000H35M.grib2",
+            "PT000H40M.grib2",
+            "PT000H45M.grib2"
+          ],
+          "last_few_steps": [
+            "PT000H40M.grib2",
+            "PT000H45M.grib2",
+            "PT000H50M.grib2",
+            "PT000H55M.grib2",
+            "PT001H00M.grib2",
+            "PT001H05M.grib2",
+            "PT001H10M.grib2",
+            "PT001H15M.grib2",
+            "PT001H20M.grib2",
+            "PT001H25M.grib2"
+          ],
+          "sample_times": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              5
+            ],
+            [
+              0,
+              10
+            ],
+            [
+              0,
+              15
+            ],
+            [
+              0,
+              20
+            ],
+            [
+              0,
+              25
+            ],
+            [
+              0,
+              30
+            ],
+            [
+              0,
+              35
+            ],
+            [
+              0,
+              40
+            ],
+            [
+              0,
+              45
+            ],
+            [
+              0,
+              50
+            ],
+            [
+              0,
+              55
+            ],
+            [
+              1,
+              0
+            ],
+            [
+              1,
+              5
+            ],
+            [
+              1,
+              10
+            ],
+            [
+              1,
+              15
+            ],
+            [
+              1,
+              20
+            ],
+            [
+              1,
+              25
+            ]
+          ]
+        }
+      },
+      "2025-08-30T08%3A00": {
+        "readable_time": "2025-08-30T08:00",
+        "ensembles": [
+          "01",
+          "02"
+        ],
+        "analysis": {
+          "total_steps": 169,
+          "time_range_minutes": 840,
+          "time_range_hours": 14.0,
+          "start_time_minutes": 0,
+          "end_time_minutes": 840,
+          "unique_intervals_minutes": [
+            5
+          ],
+          "interval_counts": {
+            "5": 168
+          },
+          "most_common_interval": 5,
+          "first_few_steps": [
+            "PT000H00M.grib2",
+            "PT000H05M.grib2",
+            "PT000H10M.grib2",
+            "PT000H15M.grib2",
+            "PT000H20M.grib2",
+            "PT000H25M.grib2",
+            "PT000H30M.grib2",
+            "PT000H35M.grib2",
+            "PT000H40M.grib2",
+            "PT000H45M.grib2"
+          ],
+          "last_few_steps": [
+            "PT013H15M.grib2",
+            "PT013H20M.grib2",
+            "PT013H25M.grib2",
+            "PT013H30M.grib2",
+            "PT013H35M.grib2",
+            "PT013H40M.grib2",
+            "PT013H45M.grib2",
+            "PT013H50M.grib2",
+            "PT013H55M.grib2",
+            "PT014H00M.grib2"
+          ],
+          "sample_times": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              5
+            ],
+            [
+              0,
+              10
+            ],
+            [
+              0,
+              15
+            ],
+            [
+              0,
+              20
+            ],
+            [
+              0,
+              25
+            ],
+            [
+              0,
+              30
+            ],
+            [
+              0,
+              35
+            ],
+            [
+              0,
+              40
+            ],
+            [
+              0,
+              45
+            ],
+            [
+              0,
+              50
+            ],
+            [
+              0,
+              55
+            ],
+            [
+              1,
+              0
+            ],
+            [
+              1,
+              5
+            ],
+            [
+              1,
+              10
+            ],
+            [
+              1,
+              15
+            ],
+            [
+              1,
+              20
+            ],
+            [
+              1,
+              25
+            ],
+            [
+              1,
+              30
+            ],
+            [
+              1,
+              35
+            ]
+          ]
+        }
+      }
+    },
+    "VMAX_10M": {
+      "2025-08-30T09%3A00": {
+        "readable_time": "2025-08-30T09:00",
+        "ensembles": [
+          "01",
+          "02"
+        ],
+        "analysis": {
+          "total_steps": 2,
+          "time_range_minutes": 60,
+          "time_range_hours": 1.0,
+          "start_time_minutes": 0,
+          "end_time_minutes": 60,
+          "unique_intervals_minutes": [
+            60
+          ],
+          "interval_counts": {
+            "60": 1
+          },
+          "most_common_interval": 60,
+          "first_few_steps": [
+            "PT000H00M.grib2",
+            "PT001H00M.grib2"
+          ],
+          "last_few_steps": [
+            "PT000H00M.grib2",
+            "PT001H00M.grib2"
+          ],
+          "sample_times": [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              0
+            ]
+          ]
+        }
+      },
+      "2025-08-30T08%3A00": {
+        "readable_time": "2025-08-30T08:00",
+        "ensembles": [
+          "01",
+          "02"
+        ],
+        "analysis": {
+          "total_steps": 15,
+          "time_range_minutes": 840,
+          "time_range_hours": 14.0,
+          "start_time_minutes": 0,
+          "end_time_minutes": 840,
+          "unique_intervals_minutes": [
+            60
+          ],
+          "interval_counts": {
+            "60": 14
+          },
+          "most_common_interval": 60,
+          "first_few_steps": [
+            "PT000H00M.grib2",
+            "PT001H00M.grib2",
+            "PT002H00M.grib2",
+            "PT003H00M.grib2",
+            "PT004H00M.grib2",
+            "PT005H00M.grib2",
+            "PT006H00M.grib2",
+            "PT007H00M.grib2",
+            "PT008H00M.grib2",
+            "PT009H00M.grib2"
+          ],
+          "last_few_steps": [
+            "PT005H00M.grib2",
+            "PT006H00M.grib2",
+            "PT007H00M.grib2",
+            "PT008H00M.grib2",
+            "PT009H00M.grib2",
+            "PT010H00M.grib2",
+            "PT011H00M.grib2",
+            "PT012H00M.grib2",
+            "PT013H00M.grib2",
+            "PT014H00M.grib2"
+          ],
+          "sample_times": [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              0
+            ],
+            [
+              2,
+              0
+            ],
+            [
+              3,
+              0
+            ],
+            [
+              4,
+              0
+            ],
+            [
+              5,
+              0
+            ],
+            [
+              6,
+              0
+            ],
+            [
+              7,
+              0
+            ],
+            [
+              8,
+              0
+            ],
+            [
+              9,
+              0
+            ],
+            [
+              10,
+              0
+            ],
+            [
+              11,
+              0
+            ],
+            [
+              12,
+              0
+            ],
+            [
+              13,
+              0
+            ],
+            [
+              14,
+              0
+            ]
+          ]
+        }
+      }
+    }
+  }
+}

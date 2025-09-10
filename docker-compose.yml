@@ -1,0 +1,151 @@
+version: '3.8'
+
+services:
+  # Main application
+  app:
+    build:
+      context: .
+      target: production
+    container_name: icon-ruc-app
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://iconuser:${POSTGRES_PASSWORD}@db:5432/iconruc
+      - REDIS_URL=redis://redis:6379/0
+      - LOG_LEVEL=info
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - app_data:/app/data
+      - app_logs:/app/logs
+    networks:
+      - icon-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # PostgreSQL database
+  db:
+    image: postgres:15-alpine
+    container_name: icon-ruc-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=iconruc
+      - POSTGRES_USER=iconuser
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./migrations:/docker-entrypoint-initdb.d/migrations
+    networks:
+      - icon-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U iconuser -d iconruc"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for session management and WebSocket scaling
+  redis:
+    image: redis:7-alpine
+    container_name: icon-ruc-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --replica-read-only no
+    volumes:
+      - redis_data:/data
+    networks:
+      - icon-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Nginx reverse proxy and load balancer
+  nginx:
+    image: nginx:alpine
+    container_name: icon-ruc-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./ssl:/etc/nginx/ssl
+      - app_logs:/var/log/nginx
+    depends_on:
+      - app
+    networks:
+      - icon-network
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: icon-ruc-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - icon-network
+
+  # Log aggregation with Loki
+  loki:
+    image: grafana/loki:latest
+    container_name: icon-ruc-loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki_data:/tmp/loki
+      - ./monitoring/loki-config.yml:/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - icon-network
+
+  # Log shipping with Promtail
+  promtail:
+    image: grafana/promtail:latest
+    container_name: icon-ruc-promtail
+    restart: unless-stopped
+    volumes:
+      - app_logs:/var/log/app
+      - ./monitoring/promtail-config.yml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    networks:
+      - icon-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  app_data:
+    driver: local
+  app_logs:
+    driver: local
+  prometheus_data:
+    driver: local
+  loki_data:
+    driver: local
+
+networks:
+  icon-network:
+    driver: bridge

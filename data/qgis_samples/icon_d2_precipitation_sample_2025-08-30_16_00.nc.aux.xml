@@ -1,0 +1,14 @@
+<PAMDataset>
+  <Subdataset name="precipitation">
+    <PAMDataset>
+      <PAMRasterBand band="1">
+        <Metadata>
+          <MDI key="STATISTICS_MAXIMUM">91.052070617676</MDI>
+          <MDI key="STATISTICS_MEAN">2.4819016637241</MDI>
+          <MDI key="STATISTICS_MINIMUM">0</MDI>
+          <MDI key="STATISTICS_STDDEV">6.2901164962277</MDI>
+        </Metadata>
+      </PAMRasterBand>
+    </PAMDataset>
+  </Subdataset>
+</PAMDataset>

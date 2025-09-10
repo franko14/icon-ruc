@@ -1,0 +1,48 @@
+version: '3.8'
+
+# Development override for docker-compose
+services:
+  app:
+    build:
+      target: development
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - LOG_LEVEL=debug
+    volumes:
+      - .:/app
+      - app_data:/app/data
+    ports:
+      - "5000:5000"
+      - "5678:5678"  # debugpy port
+
+  # Development database with exposed port
+  db:
+    ports:
+      - "5432:5432"
+
+  # Development Redis with exposed port  
+  redis:
+    ports:
+      - "6379:6379"
+
+  # Skip production services in development
+  nginx:
+    profiles:
+      - production
+  
+  prometheus:
+    profiles:
+      - monitoring
+      
+  grafana:
+    profiles:
+      - monitoring
+      
+  loki:
+    profiles:
+      - monitoring
+      
+  promtail:
+    profiles:
+      - monitoring

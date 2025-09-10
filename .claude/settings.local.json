@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(pip install:*)",
+      "Bash(source:*)",
+      "Bash(sqlite3:*)",
+      "Bash(curl:*)",
+      "Bash(lsof:*)",
+      "Bash(pkill:*)",
+      "Bash(chmod:*)",
+      "Bash(find:*)",
+      "Bash(rm:*)",
+      "Bash(mkdir:*)",
+      "Bash(PORT=8888 python weather_api.py)",
+      "Bash(PORT=8887 python weather_api.py)",
+      "Bash(sed:*)",
+      "Read(/var/folders/j9/tl761w4j1k5gtvwtcmjr1bsc0000gn/T/TemporaryItems/NSIRD_screencaptureui_2jhj6I/**)",
+      "Bash(timeout:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
