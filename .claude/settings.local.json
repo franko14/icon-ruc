@@ -16,7 +16,8 @@
       "Bash(PORT=8887 python weather_api.py)",
       "Bash(sed:*)",
       "Read(/var/folders/j9/tl761w4j1k5gtvwtcmjr1bsc0000gn/T/TemporaryItems/NSIRD_screencaptureui_2jhj6I/**)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "WebFetch(domain:192.168.1.201)"
     ],
     "deny": [],
     "ask": []

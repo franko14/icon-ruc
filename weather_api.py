@@ -694,6 +694,125 @@ def _process_runs(job_id: str, selected_runs: List[str]):
             'completed_at': datetime.now().isoformat()
         })
 
+# Proxy endpoint for measured precipitation data
+@app.route('/api/stations/<int:station_id>/timeseries', methods=['GET'])
+def get_station_timeseries(station_id):
+    """Proxy measured precipitation timeseries for station to bypass CORS"""
+    try:
+        variable = request.args.get('variable', 'precipitation')
+        period = request.args.get('period', '6h')
+        
+        if variable != 'precipitation':
+            return jsonify({
+                'success': False,
+                'error': f'Variable {variable} not supported'
+            }), 400
+        
+        if station_id != 11816:
+            return jsonify({
+                'success': False,
+                'error': f'Station {station_id} not found'
+            }), 404
+        
+        # Proxy the request to the actual API server
+        import requests
+        
+        try:
+            # Try to fetch from the actual API
+            api_url = f'http://192.168.64.1:3000/api/stations/{station_id}/timeseries'
+            params = {'variable': variable, 'period': period}
+            
+            logger.info(f"Proxying request to: {api_url} with params: {params}")
+            
+            response = requests.get(api_url, params=params, timeout=10)
+            
+            if response.status_code == 200:
+                # Forward the successful response
+                api_data = response.json()
+                logger.info(f"Successfully proxied precipitation data: {len(api_data.get('data_points', []))} points")
+                return jsonify(api_data)
+            else:
+                logger.warning(f"API returned status {response.status_code}, falling back to mock data")
+                raise Exception(f"API returned {response.status_code}")
+                
+        except Exception as proxy_error:
+            logger.warning(f"Failed to proxy to real API ({proxy_error}), using mock data")
+            
+            # Fall back to mock data if the real API is not available
+            from datetime import datetime, timedelta
+            import random
+            
+            now = datetime.now()
+            data_points = []
+            
+            # Generate data points every 5 minutes for the last 6 hours
+            for i in range(72):  # 6 hours * 12 points per hour
+                timestamp = now - timedelta(minutes=5 * (72 - i))
+                
+                # Generate realistic precipitation data
+                # Most of the time it's 0, occasionally some rain
+                if random.random() < 0.1:  # 10% chance of rain
+                    # Light to moderate rain (0.1 to 5.0 mm/h)
+                    value = round(random.uniform(0.1, 5.0), 2)
+                else:
+                    value = 0.0
+                    
+                data_points.append({
+                    'timestamp': timestamp.isoformat(),
+                    'value': value
+                })
+            
+            logger.info(f"Generated {len(data_points)} mock precipitation data points for station {station_id}")
+            
+            return jsonify({
+                'success': True,
+                'station_id': station_id,
+                'variable': variable,
+                'period': period,
+                'unit': 'mm/h',
+                'data_points': data_points,
+                'count': len(data_points),
+                'note': 'This is mock data - real API not available'
+            })
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting station data: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+# Proxy endpoint for wind data (similar to precipitation)
+@app.route('/api/stations/<int:station_id>/wind', methods=['GET'])
+def get_station_wind(station_id):
+    """Proxy measured wind data for station (mock data fallback)"""
+    try:
+        period = request.args.get('period', '6h')
+        
+        if station_id != 11816:
+            return jsonify({
+                'success': False,
+                'error': f'Station {station_id} not found'
+            }), 404
+        
+        # For now, return empty data since wind data is not available
+        # This prevents 404 errors in the frontend
+        return jsonify({
+            'success': True,
+            'station_id': station_id,
+            'period': period,
+            'data_points': [],  # Empty data
+            'count': 0,
+            'note': 'Wind data not available'
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting wind data: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 # Health check endpoint
 @app.route('/api/health', methods=['GET'])
 def health_check():

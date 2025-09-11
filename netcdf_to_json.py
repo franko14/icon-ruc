@@ -3,7 +3,7 @@
 NetCDF to JSON Converter for Web Dashboard
 ==========================================
 
-Converts NetCDF output from bratislava_pipeline.py to JSON format 
+Converts NetCDF output from bratislava_pipeline_v2.py to JSON format 
 that can be easily consumed by the web dashboard.
 """
 

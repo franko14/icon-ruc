@@ -44,10 +44,7 @@ htmlcov/
 .ipynb_checkpoints
 
 # Data directories
-data/raw/
-data/processed/
-data/bratislava/*.nc
-data/grid/*.nc
+data/*
 
 # IDE
 .vscode/

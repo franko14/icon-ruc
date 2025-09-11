@@ -124,7 +124,49 @@
         let currentRunKeys = [];
         let availableRunsData = [];
 
-        // Convert UTC timestamp to Bratislava time
+        // Convert timestamp to UTC (for consistency with forecast data)
+        function convertToUTC(timeString) {
+            // Handle different timestamp formats
+            let isoString = timeString;
+            
+            // Handle forecast format: 2025-08-31T_0605
+            if (timeString.includes('T_')) {
+                const parts = timeString.split('T_');
+                if (parts.length === 2 && parts[1].length === 4) {
+                    const hour = parts[1].substring(0, 2);
+                    const minute = parts[1].substring(2, 4);
+                    isoString = `${parts[0]}T${hour}:${minute}:00`;
+                }
+            }
+            // Handle API timestamp format with timezone (e.g., "2025-09-10T13:15:00+00:00")
+            else if (timeString.includes('+') || timeString.includes('Z')) {
+                // Already has timezone info, use as-is
+                isoString = timeString;
+            }
+            // Handle basic ISO format without timezone (assume it's local time from API)
+            else if (timeString.includes('T') && !timeString.endsWith('Z')) {
+                // If API returns local time, we need to convert it to UTC
+                // First parse as local time, then convert to UTC
+                const localDate = new Date(timeString);
+                if (!isNaN(localDate.getTime())) {
+                    return localDate.toISOString().slice(0, -1); // Remove Z to match forecast format
+                }
+            }
+            
+            // Create Date object and validate
+            const date = new Date(isoString);
+            
+            // Check if date is valid
+            if (isNaN(date.getTime())) {
+                console.warn('Invalid timestamp:', timeString, '-> parsed as:', isoString);
+                return timeString; // Return original if invalid
+            }
+            
+            // Return in UTC format consistent with forecast data
+            return date.toISOString().slice(0, -1); // Remove Z to match forecast format
+        }
+
+        // Convert UTC timestamp to Bratislava time (for forecast data display)
         function convertToBratislavaTime(utcTimeString) {
             // Handle new timestamp format: 2025-08-31T_0605
             let isoString = utcTimeString;
@@ -208,7 +250,7 @@
         // Fetch actual wind gust data from local API
         async function fetchActualWindData() {
             try {
-                const response = await fetch('http://localhost:3001/api/stations/11816/wind?period=6h');
+                const response = await fetch('/api/stations/11816/wind?period=6h');
                 if (!response.ok) {
                     console.log('Actual wind data not available (API not running)');
                     return null;
@@ -220,6 +262,25 @@
                 return data.data_points || [];
             } catch (error) {
                 console.log('Could not fetch actual wind data:', error.message);
+                return null;
+            }
+        }
+
+        // Fetch actual precipitation data from local API
+        async function fetchActualPrecipitationData() {
+            try {
+                const response = await fetch('/api/stations/11816/timeseries?variable=precipitation&period=6h');
+                if (!response.ok) {
+                    console.log('Actual precipitation data not available (API not running)');
+                    return null;
+                }
+                
+                const data = await response.json();
+                console.log('Fetched actual precipitation data:', data.data_points?.length, 'points');
+                
+                return data.data_points || [];
+            } catch (error) {
+                console.log('Could not fetch actual precipitation data:', error.message);
                 return null;
             }
         }
@@ -262,6 +323,68 @@
             return { times, gusts, speeds };
         }
 
+        // Process precipitation data - aggregate 1-minute data to 15-minute means to match forecast resolution
+        function processPrecipitationData(precipData) {
+            if (!precipData || precipData.length === 0) return { times: [], rates: [] };
+            
+            // Sort by timestamp to ensure proper order
+            const sortedData = precipData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            
+            // Group 1-minute data into 15-minute bins
+            const binSize = 15 * 60 * 1000; // 15 minutes in milliseconds
+            const bins = new Map();
+            
+            sortedData.forEach(point => {
+                if (point.value !== null && point.value !== undefined && point.timestamp) {
+                    try {
+                        // Convert to UTC first
+                        const utcTime = convertToUTC(point.timestamp);
+                        const timestamp = new Date(utcTime + 'Z'); // Ensure UTC parsing
+                        
+                        // Calculate 15-minute bin start time (round down to nearest 15-minute interval)
+                        const binStart = new Date(Math.floor(timestamp.getTime() / binSize) * binSize);
+                        const binKey = binStart.getTime();
+                        
+                        if (!bins.has(binKey)) {
+                            bins.set(binKey, { values: [], count: 0 });
+                        }
+                        
+                        // Convert from mm/minute to mm/hour (multiply by 60) before aggregating
+                        const hourlyRate = point.value * 60;
+                        bins.get(binKey).values.push(hourlyRate);
+                        bins.get(binKey).count++;
+                    } catch (error) {
+                        console.warn('Error processing precipitation point:', point.timestamp, error);
+                        // Skip this data point if processing fails
+                    }
+                }
+            });
+            
+            // Calculate 15-minute means
+            const times = [];
+            const rates = [];
+            
+            // Sort bins by time
+            const sortedBins = Array.from(bins.entries()).sort((a, b) => a[0] - b[0]);
+            
+            sortedBins.forEach(([binTime, binData]) => {
+                if (binData.values.length > 0) {
+                    // Calculate mean precipitation rate for this 15-minute period
+                    const meanRate = binData.values.reduce((sum, value) => sum + value, 0) / binData.values.length;
+                    
+                    // Use bin end time for display (add 15 minutes to bin start)
+                    const binEndTime = new Date(binTime + binSize);
+                    const displayTime = convertToBratislavaTime(binEndTime.toISOString().slice(0, -1));
+                    
+                    times.push(displayTime);
+                    rates.push(meanRate);
+                }
+            });
+            
+            console.log(`Processed ${precipData.length} 1-minute precipitation points to ${times.length} 15-minute means (${bins.size} bins)`);
+            return { times, rates };
+        }
+
         // Load all available forecast runs
         async function loadAllRuns() {
             const status = document.getElementById('status');
@@ -273,7 +396,7 @@
             
             try {
                 // Get list of available runs from API
-                const response = await fetch('http://localhost:8123/api/data/list');
+                const response = await fetch('/api/data/list');
                 const runsList = await response.json();
                 
                 if (!runsList.success) {
@@ -286,7 +409,7 @@
                 // Load data for each run
                 for (const run of runsList.runs) {
                     try {
-                        const runResponse = await fetch(`http://localhost:8123/api/data/${run.id}`);
+                        const runResponse = await fetch(`/api/data/${run.id}`);
                         const runData = await runResponse.json();
                         
                         if (runData.success) {
@@ -501,6 +624,36 @@
                 }
             }
             
+            // Add actual precipitation data if TOT_PREC is selected
+            if (weatherVariable === 'TOT_PREC') {
+                try {
+                    const actualPrecipData = await fetchActualPrecipitationData();
+                    if (actualPrecipData && actualPrecipData.length > 0) {
+                        const processedPrecipData = processPrecipitationData(actualPrecipData);
+                        
+                        if (processedPrecipData.times.length > 0) {
+                            // Add measured precipitation trace (thick red line, easily distinguishable)
+                            traces.push({
+                                x: processedPrecipData.times,
+                                y: processedPrecipData.rates,
+                                type: 'scatter',
+                                mode: 'lines+markers',
+                                name: 'Measured Precipitation',
+                                line: { color: '#DC143C', width: 3 }, // Crimson red, thick line
+                                marker: { 
+                                    size: 6, 
+                                    color: '#DC143C',
+                                    symbol: 'circle'
+                                },
+                                yaxis: 'y'
+                            });
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Could not fetch actual precipitation data:', error);
+                }
+            }
+            
             const variableNames = {
                 'mean': 'Ensemble Mean',
                 'median': 'Ensemble Median',
@@ -693,6 +846,36 @@
                     }
                 } catch (error) {
                     console.warn('Could not fetch actual wind data:', error);
+                }
+            }
+            
+            // Add actual precipitation data if TOT_PREC is selected
+            if (weatherVariable === 'TOT_PREC') {
+                try {
+                    const actualPrecipData = await fetchActualPrecipitationData();
+                    if (actualPrecipData && actualPrecipData.length > 0) {
+                        const processedPrecipData = processPrecipitationData(actualPrecipData);
+                        
+                        if (processedPrecipData.times.length > 0) {
+                            // Add measured precipitation trace (thick red line, easily distinguishable)
+                            traces.push({
+                                x: processedPrecipData.times,
+                                y: processedPrecipData.rates,
+                                type: 'scatter',
+                                mode: 'lines+markers',
+                                name: 'Measured Precipitation',
+                                line: { color: '#DC143C', width: 3 }, // Crimson red, thick line
+                                marker: { 
+                                    size: 6, 
+                                    color: '#DC143C',
+                                    symbol: 'circle'
+                                },
+                                yaxis: 'y'
+                            });
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Could not fetch actual precipitation data:', error);
                 }
             }
             

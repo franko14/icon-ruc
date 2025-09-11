@@ -6,15 +6,18 @@ This project processes DWD ICON-D2-RUC-EPS precipitation forecast data to extrac
 ## Directory Structure
 ```
 icon-ruc/
-├── bratislava_pipeline.py          # Main pipeline script
-├── enhanced_api_server.py          # Production API server with WebSocket
-├── bratislava_browser.ipynb        # Jupyter notebook for data visualization
+├── bratislava_pipeline_v2.py      # Main modular pipeline script (ACTIVE - daily use)
+├── weather_api.py                  # Flask API server for dashboard
+├── weather_dashboard.html          # Web dashboard for forecast visualization
+├── bratislava_browser.ipynb        # Jupyter notebook for data analysis
 ├── config.py                       # Configuration settings
-├── run_manager.py                  # Run management with SQLite database
-├── cleanup_manager.py              # Data cleanup and maintenance
-├── test_bratislava_pipeline.py     # Test script
-├── requirements.txt                # Python dependencies
-├── gunicorn.conf.py               # Production server configuration
+├── weather_processor.py            # Core weather data processing engine
+├── weather_models.py               # Pydantic data validation models
+├── weather_cleanup.py              # Data cleanup and maintenance (12-hour retention)
+├── netcdf_to_json.py              # NetCDF to JSON converter for dashboard
+├── validate_json_format.py         # JSON validation utility
+├── convert_to_weather_format.py    # Format converter utility
+├── requirements.txt                # Python dependencies (local development)
 ├── .gitignore                      # Git ignore rules
 ├── data/
 │   ├── bratislava/                # Output data directory
@@ -51,7 +54,7 @@ icon-ruc/
 
 ## Key Components
 
-### Main Pipeline (`bratislava_pipeline.py`)
+### Main Pipeline (`bratislava_pipeline_v2.py`)
 **Current Features:**
 - ICON grid coordinate mapping with proper lat/lon coordinates
 - Efficient single-point extraction using KDTree spatial index
@@ -74,34 +77,43 @@ icon-ruc/
 - Memory-optimized operations
 - Smart method selection based on file count
 
-### Enhanced API Server (`enhanced_api_server.py`)
-**Production Features:**
-- WebSocket support for real-time progress tracking
-- Redis caching for improved performance
-- PostgreSQL support with connection pooling
-- Prometheus metrics integration
-- Structured logging with structlog
+### Weather API Server (`weather_api.py`)
+**Features:**
+- Flask-based REST API for weather forecasts
 - CORS support for web dashboard integration
-- Comprehensive error handling and monitoring
+- JSON forecast data serving
+- Precipitation data proxy endpoint
+- Lightweight and optimized for local development
+- Integration with weather_processor.py for data processing
 
-### Run Management (`run_manager.py`)
+### Weather Data Processing (`weather_processor.py`)
 **Capabilities:**
-- SQLite database for run metadata storage
-- Hierarchical file organization by date and run
-- Automatic cleanup of old runs
-- Progress tracking and resumption support
-- Run status management (pending, processing, completed, failed)
-- Database integrity checks and maintenance
+- Single-function processor for complete weather pipeline
+- Discovers available forecast runs from DWD
+- Downloads and processes GRIB2 files efficiently
+- Extracts ensemble statistics and percentiles
+- Outputs JSON data for web dashboard consumption
+- Memory-optimized processing with progress tracking
 
-### Configuration (`config.py`)
-**Settings:**
+### Configuration & Utilities
+
+**Configuration (`config.py`):**
 - DWD OpenData URLs and endpoints
 - Grid definition file location and caching
 - Processing parameters and thresholds
 - Multi-variable configuration (TOT_PREC, VMAX_10M)
 - Predefined locations with coordinates
 - Precipitation and wind speed thresholds and percentiles
-- Database and caching configuration
+
+**Data Models (`weather_models.py`):**
+- Pydantic models for JSON data validation
+- Ensures consistency between pipeline output and frontend
+- WeatherForecast, WeatherVariable, and EnsembleStatistics schemas
+
+**Cleanup Management (`weather_cleanup.py`):**
+- Specialized cleanup with 12-hour retention policy
+- Cleans GRIB files, JSON forecasts, and processed data
+- Maintenance utilities for disk space management
 
 ## Data Processing Workflow
 
@@ -113,6 +125,20 @@ icon-ruc/
 6. **Deaccumulation**: Convert accumulated precipitation to rates
 7. **Statistics**: Calculate ensemble statistics and percentiles
 8. **Output**: Save processed data as NetCDF files
+
+## Current Workflow (Local Development)
+
+### Daily Usage Workflow
+1. **Run Active Pipeline**: `python bratislava_pipeline_v2.py` (your daily-use script)
+2. **Start Dashboard API**: `python weather_api.py` 
+3. **View Results**: Open `weather_dashboard.html` in browser
+4. **Data Cleanup**: `python weather_cleanup.py` (12-hour retention)
+
+### Development Workflow  
+1. **Process Data**: Use `weather_processor.py` for core processing
+2. **Convert Formats**: Use `netcdf_to_json.py` for dashboard compatibility
+3. **Validate Data**: Use `validate_json_format.py` for quality checks
+4. **Analyze Results**: Use `bratislava_browser.ipynb` for deep analysis
 
 ## Optimization Strategy
 
@@ -139,36 +165,43 @@ icon-ruc/
 pip install -r requirements.txt
 ```
 
-### Main Pipeline (Optimized)
+### Main Pipeline (Current Active Version)
 ```bash
-# Default: Extract for Bratislava
-python bratislava_pipeline.py
+# Default: Extract for Bratislava using modular pipeline
+python bratislava_pipeline_v2.py
 
 # Extract for different location (e.g., Berlin)
-python bratislava_pipeline.py --lat 52.52 --lon 13.40 --location Berlin
+python bratislava_pipeline_v2.py --lat 52.52 --lon 13.40 --location Berlin
 
 # Process fewer runs for faster testing
-python bratislava_pipeline.py --runs 2
+python bratislava_pipeline_v2.py --runs 2
 
 # Keep raw GRIB files for analysis
-python bratislava_pipeline.py --keep-raw
+python bratislava_pipeline_v2.py --keep-raw
 
 # Custom output directory
-python bratislava_pipeline.py --output-dir /path/to/output
+python bratislava_pipeline_v2.py --output-dir /path/to/output
 ```
 
-### Testing
+### Data Validation & Conversion
 ```bash
-python test_bratislava_pipeline.py
+# Validate JSON forecast files
+python validate_json_format.py
+
+# Convert NetCDF to JSON for dashboard
+python netcdf_to_json.py
+
+# Convert between data formats
+python convert_to_weather_format.py
 ```
 
-### Production API Server
+### Weather API Server & Dashboard
 ```bash
-# Development
-python enhanced_api_server.py
+# Start API server for dashboard
+python weather_api.py
 
-# Production with Gunicorn
-gunicorn -c gunicorn.conf.py enhanced_api_server:app
+# Open weather dashboard (after starting API)
+open weather_dashboard.html
 ```
 
 ### Visualization
@@ -185,29 +218,26 @@ jupyter notebook bratislava_browser.ipynb
 - scipy: Interpolation and spatial operations
 - pandas: Data manipulation and analysis
 
-### Web and API
-- flask: Web framework for API server
+### Web and API (Local Development)
+- flask: Lightweight web framework for API server
 - flask-cors: Cross-origin resource sharing
-- flask-socketio: WebSocket support
-- gunicorn: WSGI HTTP server for production
+- flask-compress: Response compression
 
 ### Async and Networking
-- aiohttp, aiofiles: Async I/O operations
+- aiohttp, aiofiles: Async I/O operations (optional but recommended)
 - requests: HTTP downloads
 - beautifulsoup4: HTML parsing for data discovery
 
-### Database and Caching
-- redis: Caching and session storage
-- psycopg2: PostgreSQL database adapter
+### Data Validation
+- pandas: Data manipulation and analysis (optional)
+- pydantic: Data validation (if using weather_models.py)
 
-### Monitoring and Logging
-- prometheus-client: Metrics collection
-- structlog: Structured logging
-
-### Development and Testing
-- pytest: Testing framework
+### Development and Visualization
+- jupyter: Interactive development and data analysis
+- matplotlib: Plotting for notebooks
+- cartopy: Geospatial plotting (optional)
 - tqdm: Progress bars
-- jupyter: Interactive development
+- psutil: Performance monitoring (optional)
 
 ## Expected Output
 - NetCDF files with location-specific precipitation forecasts
@@ -217,140 +247,68 @@ jupyter notebook bratislava_browser.ipynb
 - Grid accuracy metadata (distance from target coordinates)
 - Processing performance metrics and timing information
 
-## Production Deployment
+## Local Development Setup
 
-### Environment Variables
+### Quick Start
 ```bash
-export REDIS_URL="redis://localhost:6379"
-export DATABASE_URL="postgresql://user:pass@localhost/iconruc"  
-export LOG_LEVEL="INFO"
-export PROMETHEUS_PORT="8001"
-```
-
-### Using Docker (Recommended)
-```bash
-# Build image
-docker build -t icon-ruc-api .
-
-# Run with docker-compose
-docker-compose up -d
-```
-
-### Manual Deployment
-```bash
-# Install production dependencies
+# Install dependencies
 pip install -r requirements.txt
 
-# Run with Gunicorn
-gunicorn -c gunicorn.conf.py enhanced_api_server:app
-
-# Run background worker for data processing
-python bratislava_pipeline.py --daemon
-```
-
-## Development Environment Setup
-
-### Local Python Development (Recommended for Testing)
-
-For development and testing, use the local Python environment:
-
-```bash
-# Install development dependencies
-pip install -r requirements.txt -r requirements-dev.txt
-
 # Run the main pipeline
-python bratislava_pipeline.py
+python bratislava_pipeline_v2.py
 
-# Run the API server for development
-python enhanced_api_server.py
+# Start API server for dashboard
+python weather_api.py
 
-# Run tests
-python test_bratislava_pipeline.py
+# Open dashboard in browser
+open weather_dashboard.html
 ```
 
-**Note**: This project is Python-only. There is no Node.js/npm setup - the web dashboard is a standalone HTML file that doesn't require build processes.
+### Environment Notes
+**Note**: This project is Python-only. There is no Node.js/npm setup - the web dashboard (`weather_dashboard.html`) is a standalone HTML file that doesn't require build processes.
 
-### Docker Environment (Production Ready)
-
-For production deployment, use the Docker stack:
-
-```bash
-# Development with docker-compose
-docker-compose up --build
-
-# Production deployment  
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-
-# Check logs
-docker-compose logs -f app
-```
-
-**Docker Stack Components:**
-- **App**: Enhanced API server (enhanced_api_server.py)
-- **PostgreSQL**: Production database
-- **Redis**: Session management and WebSocket scaling
-- **Nginx**: Reverse proxy and load balancer  
-- **Prometheus**: Metrics collection
-- **Loki + Promtail**: Log aggregation and shipping
-
-**Monitoring**: Access Prometheus at http://localhost:9090 for metrics and monitoring.
-
-### Environment Comparison
-
-| Feature | Local Python | Docker Stack |
-|---------|--------------|-------------|
-| **Setup Speed** | Fast (`pip install`) | Medium (build containers) |
-| **Dependencies** | Python only | Full production stack |
-| **Database** | SQLite | PostgreSQL |
-| **Monitoring** | Basic logging | Prometheus + Loki |
-| **Scaling** | Single instance | Multi-container |
-| **Best For** | Development, testing | Production, staging |
+**Note**: This project is designed for local development and testing using Python directly. All components run locally without requiring external databases or services.
 
 ## Maintenance and Operations
 
 ### Data Cleanup
 ```bash
-# Remove data older than 7 days
-python cleanup_manager.py --days 7
+# Clean old weather data (12-hour retention by default)
+python weather_cleanup.py
 
-# Clean orphaned database entries
-python cleanup_manager.py --database-only
+# Custom retention period
+python weather_cleanup.py --hours 24
 
-# Full cleanup with confirmation
-python cleanup_manager.py --full --confirm
+# Show data status without cleanup
+python weather_cleanup.py --status
 ```
 
-### Database Management
+### Data Processing Management
 ```bash
-# List all runs
-python run_manager.py list
+# Process weather data using core processor
+python weather_processor.py
 
-# Show run details
-python run_manager.py show <run_id>
+# Validate processed JSON files
+python validate_json_format.py
 
-# Clean orphaned entries
-python run_manager.py cleanup
-
-# Database statistics
-python run_manager.py stats
+# Convert NetCDF outputs to JSON for dashboard
+python netcdf_to_json.py
 ```
 
-### Monitoring
-- **Prometheus**: Metrics collection at http://localhost:9090
-- **API metrics**: Available at `/metrics` endpoint
-- **Health check**: Available at `/health` endpoint
-- **WebSocket**: Connection status in dashboard
-- **Redis**: Cache statistics via Redis CLI
-- **Logs**: Aggregated with Loki, viewable via Prometheus or direct queries
+### Monitoring & Diagnostics
+- **Console logging**: Real-time processing status and progress
+- **Data validation**: JSON schema validation with weather_models.py
+- **File-based output**: Easy to inspect generated forecasts
+- **Dashboard feedback**: Visual confirmation of data loading in web interface
 
 ## Performance Notes
-- **API Server**: WebSocket for real-time updates, Redis caching
-- **Database**: SQLite for metadata, optional PostgreSQL for production  
-- **Processing**: Async downloads with semaphore control
+- **API Server**: Lightweight Flask server for local dashboard
+- **Processing**: Async downloads with semaphore control (where applicable)
 - **Memory**: Stream processing for large datasets, ~90% reduction vs original
-- **Scalability**: Horizontal scaling ready with Redis/PostgreSQL
+- **Local optimization**: Designed for single-user local development
 - **Grid definition**: One-time ~50MB download, cached locally
 - **Spatial accuracy**: KDTree nearest neighbor (typically <2km from target)
+- **File-based storage**: Simple JSON files, no database overhead
 
 ## Optimization Results ✨
 
