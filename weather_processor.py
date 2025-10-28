@@ -843,34 +843,26 @@ def process_variable_bulk(run_str: str, variable: str, grid_index: int,
         if ensemble_data:
             stats = compute_ensemble_statistics(ensemble_data, variable)
             if stats:
-                # Strip first timestamp and corresponding values for (T0, T1] interval notation
-                times = stats['times'][1:] if len(stats['times']) > 1 else stats['times']
-                
-                stripped_stats = {}
-                for key, values in stats['statistics'].items():
-                    if isinstance(values, list) and len(values) > 1:
-                        stripped_stats[key] = values[1:]
-                    else:
-                        stripped_stats[key] = values
-                
+                # Use statistics directly without cropping
+                # Note: TOT_PREC deaccumulation already handles first timestamp correctly
                 return {
                     'name': VARIABLES[variable]['name'],
                     'unit': VARIABLES[variable]['unit'],
                     'num_ensembles': stats['num_ensembles'],
-                    'times': [parse_timestamp_flexible(t).isoformat() if isinstance(t, str) else t.isoformat() for t in times],
+                    'times': [parse_timestamp_flexible(t).isoformat() if isinstance(t, str) else t.isoformat() for t in stats['times']],
                     'ensemble_statistics': {
-                        'tp_mean': stripped_stats['mean'],
-                        'tp_median': stripped_stats['median'],
-                        'tp_p05': stripped_stats['p05'],
-                        'tp_p10': stripped_stats['p10'],
-                        'tp_p25': stripped_stats['p25'],
-                        'tp_p50': stripped_stats['p50'],
-                        'tp_p75': stripped_stats['p75'],
-                        'tp_p90': stripped_stats['p90'],
-                        'tp_p95': stripped_stats['p95'],
-                        'tp_min': stripped_stats['min'],
-                        'tp_max': stripped_stats['max'],
-                        'tp_std': stripped_stats['std']
+                        'tp_mean': stats['statistics']['mean'],
+                        'tp_median': stats['statistics']['median'],
+                        'tp_p05': stats['statistics']['p05'],
+                        'tp_p10': stats['statistics']['p10'],
+                        'tp_p25': stats['statistics']['p25'],
+                        'tp_p50': stats['statistics']['p50'],
+                        'tp_p75': stats['statistics']['p75'],
+                        'tp_p90': stats['statistics']['p90'],
+                        'tp_p95': stats['statistics']['p95'],
+                        'tp_min': stats['statistics']['min'],
+                        'tp_max': stats['statistics']['max'],
+                        'tp_std': stats['statistics']['std']
                     }
                 }
         

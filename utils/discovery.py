@@ -88,36 +88,53 @@ def get_available_ensembles(run_time_str):
         print(f"Error fetching ensembles for {run_time_str}: {e}")
         return []
 
-def get_available_steps(run_time_str, ensemble):
+def get_available_steps(run_time_str, ensemble, variable_id='TOT_PREC'):
     """
     Get all available forecast steps for a specific run time and ensemble member.
-    
+
     Args:
         run_time_str (str): Run time in URL format
         ensemble (str): Ensemble member number
-        
+        variable_id (str): Variable ID (e.g., 'TOT_PREC', 'VMAX_10M')
+
     Returns:
-        list: List of available step filenames
+        list: List of available step filenames, filtered by variable's time interval
     """
-    step_url = BASE_STEP_URL.format(run_time=run_time_str, ensemble=ensemble)
-    
+    # Get variable configuration for URL
+    var_config = VARIABLES_CONFIG.get(variable_id)
+    if not var_config:
+        print(f"Warning: Unknown variable {variable_id}, using TOT_PREC")
+        step_url = BASE_STEP_URL.format(run_time=run_time_str, ensemble=ensemble)
+        time_interval = 15
+    else:
+        # Build variable-specific URL
+        step_url = f"{var_config['base_url']}r/{run_time_str}/e/{ensemble}/s/"
+        time_interval = var_config.get('time_interval_minutes', 15)
+
     try:
         response = requests.get(step_url)
         response.raise_for_status()
-        
+
         soup = BeautifulSoup(response.content, 'html.parser')
-        
+
         steps = []
         for link in soup.find_all('a'):
             href = link.get('href', '')
             if href.endswith('.grib2') and 'PT' in href:
                 steps.append(href)
-        
+
         steps.sort()
+
+        # Filter by variable's time interval
+        if time_interval and time_interval > 5:  # Only filter if interval is specified and > 5 min
+            filtered_steps = filter_steps_by_interval(steps, time_interval)
+            print(f"  Filtered {len(steps)} steps to {len(filtered_steps)} at {time_interval}-min intervals for {variable_id}")
+            return filtered_steps
+
         return steps
-        
+
     except Exception as e:
-        print(f"Error fetching steps for {run_time_str}, ensemble {ensemble}: {e}")
+        print(f"Error fetching steps for {variable_id} {run_time_str}, ensemble {ensemble}: {e}")
         return []
 
 def parse_step_time(step_str):

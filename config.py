@@ -16,6 +16,7 @@ VARIABLES_CONFIG = {
         'aggregations': ['15min', '1h', '3h', '6h', '12h', '24h'],
         'percentiles': [5, 10, 25, 50, 75, 90, 95],
         'color_scheme': ['#E6F3FF', '#CCE6FF', '#99D6FF', '#66C2FF', '#3399FF', '#0066CC'],
+        'time_interval_minutes': 5,  # Data available every 5 minutes
         'is_active': True
     },
     'VMAX_10M': {
@@ -28,6 +29,7 @@ VARIABLES_CONFIG = {
         'aggregations': ['15min', '1h', '3h', '6h'],
         'percentiles': [5, 10, 25, 50, 75, 90, 95],
         'color_scheme': ['#FFF5E6', '#FFE6CC', '#FFD699', '#FFC266', '#FFAD33', '#FF8000'],
+        'time_interval_minutes': 60,  # Data available only every 1 hour
         'is_active': True
     }
 }

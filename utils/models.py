@@ -172,19 +172,22 @@ class ForecastRun:
         }
 
 
-@dataclass 
+@dataclass
 class ProcessingConfig:
     """Configuration for pipeline processing"""
     num_runs: int = 4
     max_workers: int = 8
     variables: List[str] = field(default_factory=lambda: ['TOT_PREC', 'VMAX_10M'])
     percentiles: List[int] = field(default_factory=lambda: [5, 10, 25, 50, 75, 90, 95])
-    
+
     # Extraction parameters
     extraction_method: str = 'single'  # 'single' or 'neighbors'
     neighbor_radius_km: float = 3.5
     weighting_scheme: str = 'center_weighted'
-    
+
+    # Download parameters
+    skip_download: bool = False  # Skip download and reuse existing GRIB files
+
     # Output configuration
     output_dir: Optional[str] = None
     save_individual_ensembles: bool = True

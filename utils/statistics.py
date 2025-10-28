@@ -95,20 +95,20 @@ def calculate_ensemble_statistics(ensembles: List[EnsembleMember],
     
     # Use times from first valid ensemble
     times = valid_ensembles[0].times[:num_times]
-    
+
     # Collect all values into matrix (time x ensemble)
     all_values = np.zeros((num_times, num_ensembles))
-    
+
     for ens_idx, ensemble in enumerate(valid_ensembles):
         if len(ensemble.values) != len(ensemble.times):
             logger.warning(f"Ensemble {ensemble.ensemble_id} has mismatched times ({len(ensemble.times)}) "
                          f"and values ({len(ensemble.values)})")
-        
+
         # Handle deaccumulation if needed
         values = ensemble.values[:num_times]  # Take only available values
         if variable.needs_deaccumulation:
             values = deaccumulate_precipitation(values)
-        
+
         # Ensure we have enough values and pad with last value if needed
         if len(values) < num_times:
             logger.warning(f"Ensemble {ensemble.ensemble_id} has {len(values)} values, "
@@ -119,8 +119,15 @@ def calculate_ensemble_statistics(ensembles: List[EnsembleMember],
                 values = values + [last_value] * (num_times - len(values))
             else:
                 values = [0.0] * num_times
-        
+
         all_values[:, ens_idx] = values[:num_times]
+
+    # Check if first timestep is all zeros (analysis time t=0) and skip it
+    if num_times > 1 and np.all(all_values[0, :] == 0.0):
+        logger.info(f"Skipping first timestep (analysis time t=0) with all zeros for {variable.name}")
+        all_values = all_values[1:, :]
+        times = times[1:]
+        num_times = num_times - 1
     
     # Calculate basic statistics
     mean = np.mean(all_values, axis=1)

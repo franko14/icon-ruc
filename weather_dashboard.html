@@ -676,6 +676,32 @@
                 'VMAX_10M': 'Wind Speed (m/s)'
             };
             
+            // Calculate appropriate Y-axis range
+            let yAxisConfig = {
+                title: weatherNames[weatherVariable],
+                rangemode: 'tozero'  // Always start from 0
+            };
+
+            // Set minimum top limit based on variable type
+            if (traces.length > 0) {
+                const allYValues = traces.flatMap(trace => trace.y || []);
+                const maxY = Math.max(...allYValues.filter(v => !isNaN(v) && isFinite(v)));
+
+                if (weatherVariable === 'VMAX_10M') {
+                    // Wind: minimum top limit of 10 m/s
+                    yAxisConfig.range = [0, Math.max(maxY * 1.1, 10)];
+                } else if (weatherVariable === 'TOT_PREC') {
+                    // Precipitation rate: minimum top limit of 2 mm/h
+                    yAxisConfig.range = [0, Math.max(maxY * 1.1, 2)];
+                } else if (weatherVariable === 'TOT_PREC_1H') {
+                    // 1-hour precipitation: minimum top limit of 2 mm
+                    yAxisConfig.range = [0, Math.max(maxY * 1.1, 2)];
+                } else if (weatherVariable === 'TOT_PREC_ACCUM') {
+                    // Accumulated precipitation: just ensure starts from 0
+                    yAxisConfig.range = [0, maxY * 1.1];
+                }
+            }
+
             const layout = {
                 title: {
                     text: `${variableNames[statVariable]} - ${weatherNames[weatherVariable]}<br><sub>Comparison Across Different Forecast Runs</sub>`,
@@ -685,11 +711,9 @@
                     title: 'Forecast Time (Bratislava)',
                     type: 'date'
                 },
-                yaxis: {
-                    title: weatherNames[weatherVariable]
-                },
-                legend: { 
-                    x: 1.02, 
+                yaxis: yAxisConfig,
+                legend: {
+                    x: 1.02,
                     y: 1,
                     xanchor: 'left'
                 },
@@ -885,7 +909,33 @@
                 'TOT_PREC_1H': '1-Hour Precipitation (mm)',
                 'VMAX_10M': 'Wind Speed (m/s)'
             };
-            
+
+            // Calculate appropriate Y-axis range
+            let yAxisConfig = {
+                title: weatherNames[weatherVariable],
+                rangemode: 'tozero'  // Always start from 0
+            };
+
+            // Set minimum top limit based on variable type
+            if (traces.length > 0) {
+                const allYValues = traces.flatMap(trace => trace.y || []);
+                const maxY = Math.max(...allYValues.filter(v => !isNaN(v) && isFinite(v)));
+
+                if (weatherVariable === 'VMAX_10M') {
+                    // Wind: minimum top limit of 10 m/s
+                    yAxisConfig.range = [0, Math.max(maxY * 1.1, 10)];
+                } else if (weatherVariable === 'TOT_PREC') {
+                    // Precipitation rate: minimum top limit of 2 mm/h
+                    yAxisConfig.range = [0, Math.max(maxY * 1.1, 2)];
+                } else if (weatherVariable === 'TOT_PREC_1H') {
+                    // 1-hour precipitation: minimum top limit of 2 mm
+                    yAxisConfig.range = [0, Math.max(maxY * 1.1, 2)];
+                } else if (weatherVariable === 'TOT_PREC_ACCUM') {
+                    // Accumulated precipitation: just ensure starts from 0
+                    yAxisConfig.range = [0, maxY * 1.1];
+                }
+            }
+
             const layout = {
                 title: {
                     text: `Ensemble Uncertainty Analysis - ${weatherNames[weatherVariable]}<br><sub>${displayName} | Ensemble Size: ${runData.variables[weatherVariable].num_ensembles}</sub>`,
@@ -895,11 +945,9 @@
                     title: 'Forecast Time (Bratislava)',
                     type: 'date'
                 },
-                yaxis: {
-                    title: weatherNames[weatherVariable]
-                },
-                legend: { 
-                    x: 1.02, 
+                yaxis: yAxisConfig,
+                legend: {
+                    x: 1.02,
                     y: 1,
                     xanchor: 'left'
                 },

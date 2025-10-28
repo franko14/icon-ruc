@@ -38,13 +38,16 @@ def parse_arguments() -> argparse.Namespace:
 Examples:
   # Process 4 runs for Bratislava (default)
   python bratislava_pipeline_v2.py
-  
+
   # Process for different location
   python bratislava_pipeline_v2.py --lat 52.52 --lon 13.40 --location Berlin
-  
+
+  # Process for different location WITHOUT re-downloading (reuse existing GRIB files)
+  python bratislava_pipeline_v2.py --lat 52.52 --lon 13.40 --location Berlin --skip-download
+
   # Process only precipitation with neighbor extraction
   python bratislava_pipeline_v2.py --variables TOT_PREC --extraction-method neighbors
-  
+
   # Custom configuration
   python bratislava_pipeline_v2.py --runs 2 --max-workers 4 --output-dir /tmp/weather
         """
@@ -102,6 +105,8 @@ Examples:
                            default='INFO', help='Logging level (default: INFO)')
     other_group.add_argument('--dry-run', action='store_true',
                            help='Show what would be processed without actually processing')
+    other_group.add_argument('--skip-download', action='store_true',
+                           help='Skip download and reuse existing GRIB files from data/raw/')
     
     return parser.parse_args()
 
@@ -165,6 +170,7 @@ async def main():
             extraction_method=args.extraction_method,
             neighbor_radius_km=args.neighbor_radius,
             weighting_scheme=args.weighting_scheme,
+            skip_download=args.skip_download,
             output_dir=str(args.output_dir) if args.output_dir else None,
             save_individual_ensembles=not args.no_ensembles,
             save_statistics=not args.no_statistics,

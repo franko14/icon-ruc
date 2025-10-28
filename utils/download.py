@@ -15,6 +15,8 @@ from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 from functools import partial
 import os
+import ssl
+import certifi
 
 # Try to import tqdm for progress bars, fallback to basic progress if not available
 try:
@@ -535,17 +537,21 @@ async def async_batch_download(run_ensemble_steps: Union[Dict, List[Tuple]],
     
     # Create semaphore to limit concurrent downloads
     semaphore = asyncio.Semaphore(max_concurrent)
-    
+
+    # Create SSL context with certifi certificates
+    ssl_context = ssl.create_default_context(cafile=certifi.where())
+
     # Configure aiohttp session with connection pooling
     connector = aiohttp.TCPConnector(
         limit=max_concurrent + 10,
         limit_per_host=max_concurrent,
         ttl_dns_cache=300,
-        use_dns_cache=True
+        use_dns_cache=True,
+        ssl=ssl_context
     )
-    
+
     timeout = aiohttp.ClientTimeout(total=300, connect=30)
-    
+
     async with aiohttp.ClientSession(
         connector=connector,
         timeout=timeout,

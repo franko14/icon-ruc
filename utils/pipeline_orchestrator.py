@@ -12,8 +12,12 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any
 from datetime import datetime
 import logging
+import ssl
+import certifi
+import re
+from collections import defaultdict
 
-from .models import (ForecastRun, VariableData, EnsembleMember, TargetLocation, 
+from .models import (ForecastRun, VariableData, EnsembleMember, TargetLocation,
                     ProcessingConfig, get_variable_config, GridInfo)
 from .extraction import (extract_point_from_grib, validate_extraction_setup)
 from .statistics import calculate_ensemble_statistics, validate_ensemble_data
@@ -23,13 +27,88 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from utils.discovery import discover_all_data, get_available_ensembles, get_available_steps  
+from utils.discovery import discover_all_data, get_available_ensembles, get_available_steps
 from utils.download import smart_batch_download
 from utils.grid import download_icon_grid_definition
 from scipy.spatial import KDTree
 import numpy as np
+from config import RAW_DATA_DIR
 
 logger = logging.getLogger(__name__)
+
+
+def find_existing_grib_files(raw_dir: Optional[Path] = None) -> Dict[str, Dict[str, List[str]]]:
+    """
+    Find existing GRIB files in the raw data directory and group them by run time and variable.
+
+    Args:
+        raw_dir: Directory containing raw GRIB files (default: RAW_DATA_DIR from config)
+
+    Returns:
+        Dict mapping run_time_str -> {variable_id -> [list of file paths]}
+        Example: {
+            '2025-10-09T13:00': {
+                'TOT_PREC': ['/path/to/file1.grib2', '/path/to/file2.grib2', ...],
+                'VMAX_10M': ['/path/to/file3.grib2', ...]
+            }
+        }
+    """
+    if raw_dir is None:
+        raw_dir = RAW_DATA_DIR
+
+    if not raw_dir.exists():
+        logger.warning(f"Raw data directory does not exist: {raw_dir}")
+        return {}
+
+    # Pattern: icon_d2_ruc_eps_{VARIABLE}_{YYYYMMDDTHHMM}_e{NN}_PT{HHH}H{MM}M.grib2
+    # Example: icon_d2_ruc_eps_TOT_PREC_2025-10-09T1300_e01_PT000H05M.grib2
+    pattern = re.compile(
+        r'icon_d2_ruc_eps_(?P<variable>[A-Z_]+)_'
+        r'(?P<date>\d{4}-\d{2}-\d{2})T(?P<time>\d{4})_'
+        r'e(?P<ensemble>\d+)_'
+        r'PT(?P<step>.+)\.grib2'
+    )
+
+    # Group files by run time and variable
+    runs_data = defaultdict(lambda: defaultdict(list))
+
+    grib_files = list(raw_dir.glob("icon_d2_ruc_eps_*.grib2"))
+    logger.info(f"Found {len(grib_files)} GRIB files in {raw_dir}")
+
+    for grib_file in grib_files:
+        match = pattern.match(grib_file.name)
+        if not match:
+            logger.debug(f"Skipping file with unrecognized pattern: {grib_file.name}")
+            continue
+
+        variable = match.group('variable')
+        date = match.group('date')
+        time_str = match.group('time')  # e.g., "1300"
+
+        # Convert time to HH:MM format
+        if len(time_str) == 4:
+            hour = time_str[:2]
+            minute = time_str[2:]
+            run_time_str = f"{date}T{hour}:{minute}"
+        else:
+            logger.warning(f"Unexpected time format in {grib_file.name}: {time_str}")
+            continue
+
+        runs_data[run_time_str][variable].append(str(grib_file))
+
+    # Convert defaultdict to regular dict and sort files
+    result = {}
+    for run_time, variables in runs_data.items():
+        result[run_time] = {}
+        for var_id, files in variables.items():
+            result[run_time][var_id] = sorted(files)
+
+    logger.info(f"Found data for {len(result)} forecast runs")
+    for run_time, variables in result.items():
+        var_summary = ", ".join([f"{var}: {len(files)} files" for var, files in variables.items()])
+        logger.info(f"  {run_time}: {var_summary}")
+
+    return result
 
 
 class PipelineOrchestrator:
@@ -143,54 +222,56 @@ class PipelineOrchestrator:
         """Download GRIB files for a forecast run"""
         run_time_str = run_info['run_time']
         logger.info(f"Downloading data for run {run_time_str}")
-        
-        # Get ensemble and step information
+
+        # Get ensemble information
         ensembles = get_available_ensembles(run_time_str)
         if not ensembles:
             raise RuntimeError(f"No ensembles found for run {run_time_str}")
-        
+
         # Limit ensembles if needed (for testing)
         max_ensembles = 20  # Full ensemble
         ensembles = ensembles[:max_ensembles]
-        
-        # Get forecast steps
-        steps = get_available_steps(run_time_str, ensembles[0])
-        if not steps:
-            raise RuntimeError(f"No forecast steps found for run {run_time_str}")
-        
-        # Download files for each variable separately with variable-specific URLs
+
+        # Download files for each variable separately with variable-specific URLs and steps
         files_by_variable = {}
-        
+
         for var_id in self.config.variables:
             logger.info(f"Downloading {var_id} files...")
-            
+
+            # Get variable-specific forecast steps
+            steps = get_available_steps(run_time_str, ensembles[0], variable_id=var_id)
+            if not steps:
+                logger.error(f"No forecast steps found for {var_id} in run {run_time_str}")
+                files_by_variable[var_id] = []
+                continue
+
             # Prepare download list for this variable
             var_download_list = []
             for ensemble in ensembles:
                 for step in steps:
                     var_download_list.append((run_time_str, ensemble, step))
-            
+
             logger.info(f"Downloading {len(var_download_list)} files for {var_id} "
                        f"({len(ensembles)} ens × {len(steps)} steps)")
-            
+
             try:
                 # Use variable-specific download
                 downloaded_files = await self._download_variable_files(
                     var_id, var_download_list,
                     max_workers=min(self.config.max_workers, 4)
                 )
-                
+
                 # Filter for actual files that contain the variable
-                var_files = [f for f in downloaded_files 
+                var_files = [f for f in downloaded_files
                            if f and Path(f).exists()]
-                
+
                 files_by_variable[var_id] = var_files
                 logger.info(f"Downloaded {len(var_files)} files for {var_id}")
-                
+
             except Exception as e:
                 logger.error(f"Error downloading {var_id}: {e}")
                 files_by_variable[var_id] = []
-        
+
         return files_by_variable
     
     async def _download_variable_files(self, var_id: str, 
@@ -257,8 +338,16 @@ class PipelineOrchestrator:
         
         # Download all files
         downloaded_files = []
-        connector = aiohttp.TCPConnector(limit=max_workers, limit_per_host=max_workers)
-        
+
+        # Create SSL context with certifi certificates
+        ssl_context = ssl.create_default_context(cafile=certifi.where())
+
+        connector = aiohttp.TCPConnector(
+            limit=max_workers,
+            limit_per_host=max_workers,
+            ssl=ssl_context
+        )
+
         async with aiohttp.ClientSession(connector=connector) as session:
             tasks = []
             for run_time_str, ensemble, step in var_download_list:
@@ -398,19 +487,15 @@ class PipelineOrchestrator:
                     logger.warning(f"Failed to extract value from {Path(grib_file).name}")
             
             logger.info(f"Ensemble {ensemble_id}: extracted {len(values)} values from {len(sorted_files)} files")
-            
+
             if not times:
                 logger.warning(f"No data extracted for ensemble {ensemble_id}")
                 return None
-            
-            # Skip 0th timestamp as requested
-            if len(times) > 1:
-                logger.debug(f"Skipping first timestamp, using {len(times)-1} values")
-                times = times[1:]
-                values = values[1:]
-            else:
-                logger.warning(f"Only {len(times)} timestamps found, cannot skip first")
-            
+
+            # Keep all timestamps - no cropping needed
+            # TOT_PREC deaccumulation will handle first timestamp correctly in statistics
+            # VMAX_10M should keep all values as they are instantaneous measurements
+
             ensemble_member = EnsembleMember(
                 ensemble_id=ensemble_id,
                 times=times,
@@ -526,34 +611,76 @@ class PipelineOrchestrator:
         
         return forecast_run
     
-    async def run_pipeline(self, 
-                          target_lat: float, 
+    async def run_pipeline(self,
+                          target_lat: float,
                           target_lon: float,
                           target_name: str = "Target Location",
                           output_dir: Optional[Path] = None) -> List[ForecastRun]:
         """Run the complete pipeline"""
         logger.info("Starting modular weather pipeline")
-        
+
         # Setup
         if not self.grid_info:
             self.initialize_grid()
-        
+
         self.setup_target_location(target_lat, target_lon, target_name)
-        
+
         # Set output directory
         if output_dir is None:
             output_dir = Path.cwd() / 'data'
         else:
             output_dir = Path(output_dir)
-        
-        # Discover runs
-        forecast_runs_info = await self.discover_forecast_runs()
-        
+
+        # Check if we should skip download and use existing files
+        if self.config.skip_download:
+            logger.info("Skip download mode enabled - looking for existing GRIB files")
+            existing_files = find_existing_grib_files()
+
+            if not existing_files:
+                logger.error("No existing GRIB files found in data/raw/. Cannot proceed in skip-download mode.")
+                logger.info("Run without --skip-download to download new data first.")
+                return []
+
+            # Create run info from existing files
+            forecast_runs_info = []
+            for run_time_str, variables_files in existing_files.items():
+                # Check if this run has the requested variables
+                has_required_vars = all(var in variables_files for var in self.config.variables)
+                if has_required_vars:
+                    forecast_runs_info.append({
+                        'run_time': run_time_str,
+                        'ensembles': [],  # Not needed when using existing files
+                        'num_ensembles': 0
+                    })
+
+            logger.info(f"Found {len(forecast_runs_info)} runs with required variables in existing files")
+
+        else:
+            # Discover runs normally
+            forecast_runs_info = await self.discover_forecast_runs()
+
         # Process each run
         completed_runs = []
         for run_info in forecast_runs_info:
             try:
-                forecast_run = await self.process_forecast_run(run_info)
+                if self.config.skip_download:
+                    # Use existing files
+                    run_time_str = run_info['run_time']
+                    existing_files_map = find_existing_grib_files()
+                    files_by_variable = existing_files_map.get(run_time_str, {})
+
+                    if not files_by_variable:
+                        logger.warning(f"No files found for run {run_time_str}, skipping")
+                        continue
+
+                    forecast_run = await self.process_forecast_run_from_files(run_info, files_by_variable)
+                else:
+                    # Normal download and process
+                    forecast_run = await self.process_forecast_run(run_info)
+
+                if not forecast_run:
+                    logger.warning(f"Failed to process run {run_info.get('run_time', 'unknown')}")
+                    continue
                 
                 # Save outputs
                 saved_files = save_all_outputs(
