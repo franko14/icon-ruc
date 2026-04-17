@@ -90,3 +90,5 @@ temp/
 # System files
 .DS_Store
 Thumbs.db
+# Worktrees
+.worktrees/
