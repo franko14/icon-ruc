@@ -17,7 +17,10 @@
       "Bash(sed:*)",
       "Read(/var/folders/j9/tl761w4j1k5gtvwtcmjr1bsc0000gn/T/TemporaryItems/NSIRD_screencaptureui_2jhj6I/**)",
       "Bash(timeout:*)",
-      "WebFetch(domain:192.168.1.201)"
+      "WebFetch(domain:192.168.1.201)",
+      "Bash(.venv/bin/python -c ' *)",
+      "Bash(.venv/bin/python -m pytest tests/ -q)",
+      "Bash(.venv/bin/python main.py --list-local)"
     ],
     "deny": [],
     "ask": []
