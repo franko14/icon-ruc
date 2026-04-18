@@ -35,13 +35,15 @@
   --warn:#e0a55c;
 
   --font-display:"Instrument Serif", "Iowan Old Style", serif;
+  /* --font-data and --font-ui intentionally resolve to the same family.
+     Keeping the tokens separate so a future split (e.g. sans for UI) is one-token. */
   --font-data:"IBM Plex Mono", ui-monospace, Menlo, monospace;
   --font-ui:"IBM Plex Mono", ui-monospace, Menlo, monospace;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
   font-family:var(--font-ui);font-size:14px;line-height:1.5;
-  -webkit-font-smoothing:antialiased;font-feature-settings:"ss01","cv11";
+  -webkit-font-smoothing:antialiased;
 }
 body{background:
   radial-gradient(1200px 600px at 10% -10%, rgba(212,166,86,0.04), transparent 60%),
@@ -606,12 +608,12 @@ function drawChart(varName, vd){
         ticks:{stroke:'#2e3440', width:1, size:4},
         font:'10px "IBM Plex Mono", monospace',
         values:(u, vals) => {
-          let lastDay = null;
+          const seenDays = new Set();
           return vals.map(v => {
             const d = new Date(v*1000);
             const day = d.toLocaleDateString([], {month:'short', day:'numeric'});
             const hm  = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
-            if (day !== lastDay){ lastDay = day; return `${day} ${hm}`; }
+            if (!seenDays.has(day)){ seenDays.add(day); return `${day} ${hm}`; }
             return hm;
           });
         },
@@ -639,9 +641,11 @@ function drawChart(varName, vd){
     hooks: {
       draw: [
         (u) => {
-          // p50 glow — wider, lower-alpha stroke under the main line
+          // p50 glow — wider, lower-alpha stroke under the main line.
+          // Index 5 matches the data layout [t, p10, p90, p25, p75, p50] declared above.
+          const P50_IDX = 5;
           const xs = u.data[0];
-          const ys = u.data[5];
+          const ys = u.data[P50_IDX];
           if (!xs || !ys || !xs.length) return;
           const ctx = u.ctx;
           ctx.save();
