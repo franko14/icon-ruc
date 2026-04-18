@@ -22,13 +22,13 @@
 
   --precip:#d4a656;
   --precip-2:rgba(212,166,86,0.55);
-  --precip-3:rgba(212,166,86,0.28);
-  --precip-4:rgba(212,166,86,0.12);
+  --precip-3:rgba(212,166,86,0.45);
+  --precip-4:rgba(212,166,86,0.22);
 
   --wind:#6b94a8;
   --wind-2:rgba(107,148,168,0.55);
-  --wind-3:rgba(107,148,168,0.28);
-  --wind-4:rgba(107,148,168,0.12);
+  --wind-3:rgba(107,148,168,0.45);
+  --wind-4:rgba(107,148,168,0.22);
 
   --bad:#d96c6c;
   --good:#7eb580;
@@ -562,19 +562,21 @@ function drawChart(varName, vd){
   const t = sliceByRange(times, vd.percentiles.p50, range.hours).times.map(ms => ms/1000);
 
   const accent = meta.accent === 'precip' ? '#d4a656' : '#6b94a8';
-  const outer4 = meta.accent === 'precip' ? 'rgba(212,166,86,0.12)' : 'rgba(107,148,168,0.12)';
-  const inner3 = meta.accent === 'precip' ? 'rgba(212,166,86,0.28)' : 'rgba(107,148,168,0.28)';
+  const outer4 = meta.accent === 'precip' ? 'rgba(212,166,86,0.22)' : 'rgba(107,148,168,0.22)';
+  const inner3 = meta.accent === 'precip' ? 'rgba(212,166,86,0.45)' : 'rgba(107,148,168,0.45)';
+  const edge   = meta.accent === 'precip' ? 'rgba(212,166,86,0.35)' : 'rgba(107,148,168,0.35)';
+  const glow   = meta.accent === 'precip' ? 'rgba(212,166,86,0.25)' : 'rgba(107,148,168,0.25)';
 
   // Data layout: [times, p10, p90, p25, p75, p50]
   const data = [t, sliced.p10, sliced.p90, sliced.p25, sliced.p75, sliced.p50];
 
   const series = [
     {},
-    {stroke:'transparent', points:{show:false}, label:'p10', show: cur.spread === 'wide'},
-    {stroke:'transparent', points:{show:false}, label:'p90', show: cur.spread === 'wide'},
-    {stroke:'transparent', points:{show:false}, label:'p25', show: cur.spread !== 'median'},
-    {stroke:'transparent', points:{show:false}, label:'p75', show: cur.spread !== 'median'},
-    {stroke:accent, width:1.6, points:{show:false}, label:'p50'},
+    {stroke:edge, width:1, dash:[3,3], points:{show:false}, label:'p10', show: cur.spread === 'wide'},
+    {stroke:edge, width:1, dash:[3,3], points:{show:false}, label:'p90', show: cur.spread === 'wide'},
+    {stroke:edge, width:1, dash:[2,2], points:{show:false}, label:'p25', show: cur.spread !== 'median'},
+    {stroke:edge, width:1, dash:[2,2], points:{show:false}, label:'p75', show: cur.spread !== 'median'},
+    {stroke:accent, width:2.0, points:{show:false}, label:'p50'},
   ];
 
   const bands = [];
@@ -630,6 +632,29 @@ function drawChart(varName, vd){
     },
     hooks: {
       draw: [
+        (u) => {
+          // p50 glow — wider, lower-alpha stroke under the main line
+          const xs = u.data[0];
+          const ys = u.data[5];
+          if (!xs || !ys || !xs.length) return;
+          const ctx = u.ctx;
+          ctx.save();
+          ctx.beginPath();
+          ctx.strokeStyle = glow;
+          ctx.lineWidth = 5;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          let started = false;
+          for (let i = 0; i < xs.length; i++){
+            if (ys[i] == null) { started = false; continue; }
+            const x = u.valToPos(xs[i], 'x', true);
+            const y = u.valToPos(ys[i], 'y', true);
+            if (!started) { ctx.moveTo(x, y); started = true; }
+            else { ctx.lineTo(x, y); }
+          }
+          ctx.stroke();
+          ctx.restore();
+        },
         (u) => {
           if (thresholdVal == null) return;
           const ctx = u.ctx;
