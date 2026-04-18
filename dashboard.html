@@ -581,8 +581,10 @@ function drawChart(varName, vd){
   ];
 
   const bands = [];
-  if (cur.spread === 'wide') bands.push({series:[1,2], fill:outer4});
-  if (cur.spread !== 'median') bands.push({series:[3,4], fill:inner3});
+  // uPlot bands: series[0] is the HIGH (top) edge, series[1] is the LOW (bottom) edge.
+  // Default dir is -1 (fill downwards from high to low). Data layout: 1=p10, 2=p90, 3=p25, 4=p75.
+  if (cur.spread === 'wide') bands.push({series:[2,1], fill:outer4});
+  if (cur.spread !== 'median') bands.push({series:[4,3], fill:inner3});
 
   // Threshold horizontal line — drawn via custom hook
   const thresholdVal = cur.threshold ? Number(cur.threshold) : null;
