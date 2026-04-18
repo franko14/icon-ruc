@@ -566,7 +566,6 @@ function drawChart(varName, vd){
   const accent = meta.accent === 'precip' ? '#d4a656' : '#6b94a8';
   const outer4 = meta.accent === 'precip' ? 'rgba(212,166,86,0.22)' : 'rgba(107,148,168,0.22)';
   const inner3 = meta.accent === 'precip' ? 'rgba(212,166,86,0.45)' : 'rgba(107,148,168,0.45)';
-  const edge   = meta.accent === 'precip' ? 'rgba(212,166,86,0.35)' : 'rgba(107,148,168,0.35)';
   const glow   = meta.accent === 'precip' ? 'rgba(212,166,86,0.25)' : 'rgba(107,148,168,0.25)';
 
   // Data layout: [times, p10, p90, p25, p75, p50]
@@ -574,10 +573,10 @@ function drawChart(varName, vd){
 
   const series = [
     {},
-    {stroke:edge, width:1, dash:[3,3], points:{show:false}, label:'p10', show: cur.spread === 'wide'},
-    {stroke:edge, width:1, dash:[3,3], points:{show:false}, label:'p90', show: cur.spread === 'wide'},
-    {stroke:edge, width:1, dash:[2,2], points:{show:false}, label:'p25', show: cur.spread !== 'median'},
-    {stroke:edge, width:1, dash:[2,2], points:{show:false}, label:'p75', show: cur.spread !== 'median'},
+    {stroke:'transparent', points:{show:false}, label:'p10', show: cur.spread === 'wide'},
+    {stroke:'transparent', points:{show:false}, label:'p90', show: cur.spread === 'wide'},
+    {stroke:'transparent', points:{show:false}, label:'p25', show: cur.spread !== 'median'},
+    {stroke:'transparent', points:{show:false}, label:'p75', show: cur.spread !== 'median'},
     {stroke:accent, width:2.0, points:{show:false}, label:'p50'},
   ];
 
