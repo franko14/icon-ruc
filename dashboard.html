@@ -591,7 +591,7 @@ function drawChart(varName, vd){
   const opts = {
     width: el.clientWidth || 900,
     height: 340,
-    padding: [14, 10, 10, 10],
+    padding: [14, 60, 10, 10],
     scales: {
       x:{time:true},
       y:{auto:true, range:(u, dmin, dmax) => {
@@ -605,10 +605,16 @@ function drawChart(varName, vd){
         grid:{stroke:'rgba(255,255,255,0.04)', width:1},
         ticks:{stroke:'#2e3440', width:1, size:4},
         font:'10px "IBM Plex Mono", monospace',
-        values:(u, vals) => vals.map(v => {
-          const d = new Date(v*1000);
-          return d.toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}).replace(',','');
-        }),
+        values:(u, vals) => {
+          let lastDay = null;
+          return vals.map(v => {
+            const d = new Date(v*1000);
+            const day = d.toLocaleDateString([], {month:'short', day:'numeric'});
+            const hm  = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
+            if (day !== lastDay){ lastDay = day; return `${day} ${hm}`; }
+            return hm;
+          });
+        },
       },
       {
         stroke:'#7f8796',
