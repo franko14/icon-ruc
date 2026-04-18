@@ -6,7 +6,7 @@
 <title>ICON-D2-RUC-EPS · Bratislava</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uplot@1.6.31/dist/uPlot.min.css">
 <style>
 :root{
@@ -35,8 +35,8 @@
   --warn:#e0a55c;
 
   --font-display:"Instrument Serif", "Iowan Old Style", serif;
-  --font-data:"JetBrains Mono", ui-monospace, Menlo, monospace;
-  --font-ui:"Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-data:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --font-ui:"IBM Plex Mono", ui-monospace, Menlo, monospace;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
@@ -602,7 +602,7 @@ function drawChart(varName, vd){
         stroke:'#7f8796',
         grid:{stroke:'rgba(255,255,255,0.04)', width:1},
         ticks:{stroke:'#2e3440', width:1, size:4},
-        font:'10px "JetBrains Mono", monospace',
+        font:'10px "IBM Plex Mono", monospace',
         values:(u, vals) => vals.map(v => {
           const d = new Date(v*1000);
           return d.toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}).replace(',','');
@@ -613,10 +613,10 @@ function drawChart(varName, vd){
         grid:{stroke:'rgba(255,255,255,0.04)', width:1},
         ticks:{stroke:'#2e3440', width:1, size:4},
         size:64,
-        font:'10px "JetBrains Mono", monospace',
+        font:'10px "IBM Plex Mono", monospace',
         label:vd.unit,
         labelSize:30,
-        labelFont:'10px "JetBrains Mono", monospace',
+        labelFont:'10px "IBM Plex Mono", monospace',
         labelGap:6,
       },
     ],
@@ -645,7 +645,7 @@ function drawChart(varName, vd){
           ctx.stroke();
           ctx.setLineDash([]);
           // label
-          ctx.font = '10px "JetBrains Mono", monospace';
+          ctx.font = '10px "IBM Plex Mono", monospace';
           ctx.fillStyle = 'rgba(217,108,108,0.9)';
           ctx.textAlign = 'right';
           ctx.fillText(`≥${thresholdVal} ${vd.unit}`, u.bbox.left + u.bbox.width - 4, yPos - 4);
