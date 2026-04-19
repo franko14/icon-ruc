@@ -14,7 +14,11 @@ from . import config, discover
 
 try:
     import extract_rs  # type: ignore
-    _RUST_AVAILABLE = True
+    # The extract_rs/ source directory can be discovered as an empty
+    # namespace package (PEP 420) when the compiled wheel isn't installed
+    # — e.g. on CI runners. A plain `import` succeeds but the Rust symbols
+    # aren't present. Verify the real function exists before using it.
+    _RUST_AVAILABLE = hasattr(extract_rs, "extract_points")
 except ImportError:
     _RUST_AVAILABLE = False
 
