@@ -165,6 +165,10 @@ a:hover{text-decoration:underline}
   background:var(--panel);border-radius:var(--radius);box-shadow:var(--shadow);
   padding:16px;position:relative;overflow:hidden;
 }
+.chart-scroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+.chart-scroll::-webkit-scrollbar{height:6px}
+.chart-scroll::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:3px}
+.chart-scroll::-webkit-scrollbar-track{background:transparent}
 .chart{height:340px}
 .readout{
   display:flex;gap:22px;flex-wrap:wrap;padding:13px 16px 12px;
@@ -263,13 +267,45 @@ a:hover{text-decoration:underline}
 .u-cursor-x,.u-cursor-y{background:var(--line-2)!important}
 
 @media (max-width:720px){
-  .page{padding:20px 14px}
-  .header{padding:18px 18px;flex-direction:column;align-items:flex-start;gap:14px}
+  .page{padding:16px 10px 36px}
+  .header{padding:16px;flex-direction:column;align-items:flex-start;gap:12px;margin-bottom:20px}
   .header-meta{align-items:flex-start;width:100%}
+  .run-picker{width:100%}
+  .run-picker select{flex:1}
   .brand-title{font-size:19px}
-  .sum-value{font-size:32px}
-  .summary{grid-template-columns:1fr;gap:10px}
-  .chart{height:260px}
+  .brand-title .loc{display:block;margin-left:0;margin-top:2px;font-size:12px}
+
+  .block{margin-bottom:28px}
+  .block-head{gap:10px;margin-bottom:10px}
+  .block-title h2{font-size:14px}
+  .block-desc{font-size:11.5px}
+
+  .controls{gap:8px;width:100%}
+  .ctrl{gap:5px;flex-wrap:wrap}
+  .ctrl-label{font-size:9.5px}
+  .seg button{padding:5px 8px;font-size:10.5px}
+
+  .chart-wrap{padding:10px 8px 6px;border-radius:6px}
+  /* Chart renders at a desktop-friendly width; user swipes horizontally */
+  .chart{height:280px;min-width:680px}
+  .chart-scroll{
+    margin:-10px -8px 0;padding:10px 8px 0;
+    /* Fade on right edge hints more content off-screen */
+    mask-image:linear-gradient(to right, black 0, black calc(100% - 20px), transparent 100%);
+    -webkit-mask-image:linear-gradient(to right, black 0, black calc(100% - 20px), transparent 100%);
+  }
+  .readout{padding:10px 10px;font-size:11.5px;gap:12px;margin:10px -8px -6px}
+  .readout .sep{margin:0 2px}
+
+  .legend{font-size:10.5px;gap:12px}
+  .legend .sw{width:16px;height:7px;margin-right:4px}
+
+  .evolution-head{gap:10px;padding-top:18px;margin-bottom:12px}
+  .evolution-head .title{font-size:14px}
+  .chip{font-size:10.5px;padding:5px 9px}
+  .chip-action{font-size:9.5px;padding:4px 8px}
+
+  .footer{margin-top:24px;font-size:10px;gap:8px}
 }
 </style>
 </head>
@@ -455,7 +491,9 @@ function renderBlock(parent, varName, data){
       <div class="controls" id="ctrl-${varName}"></div>
     </div>
     <div class="chart-wrap">
-      <div class="chart" id="chart-${varName}"></div>
+      <div class="chart-scroll">
+        <div class="chart" id="chart-${varName}"></div>
+      </div>
       <div class="readout" id="readout-${varName}"></div>
     </div>
     <div class="legend" data-var="${varName}" id="legend-${varName}"></div>
@@ -745,7 +783,9 @@ function renderEvolution(){
       </div>
       <div class="run-chips" id="chips-${varName}"></div>
       <div class="chart-wrap">
-        <div class="chart" id="evchart-${varName}"></div>
+        <div class="chart-scroll">
+          <div class="chart" id="evchart-${varName}"></div>
+        </div>
       </div>
     `;
     root.appendChild(section);
