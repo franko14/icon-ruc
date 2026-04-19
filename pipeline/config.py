@@ -17,12 +17,20 @@ VARIABLES = {
         "thresholds": [0.1, 1.0, 5.0, 10.0],
     },
     "VMAX_10M": {
-        "grib_var": "fg10",
+        "grib_var": "max_i10fg",  # eccodes shortName; cfVarName is "fg10"
         "is_accumulated": False,
         "step_minutes": 60,
         "unit": "m/s",
         "thresholds": [5.0, 10.0, 15.0, 20.0],
         "skip_first_step": True,  # Model reports 0 at t=0; drop it.
+    },
+    "T_2M": {
+        "grib_var": "2t",         # eccodes shortName; cfVarName is "t2m"
+        "is_accumulated": False,
+        "step_minutes": 60,
+        "unit": "°C",
+        "offset": -273.15,         # GRIB values are Kelvin; shift to Celsius
+        "thresholds": [0.0, 10.0, 20.0, 30.0],
     },
 }
 

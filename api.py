@@ -38,6 +38,16 @@ def root():
     return send_from_directory(BASE_DIR, "dashboard.html")
 
 
+@app.route("/data/forecasts/<path:name>")
+def forecast_static(name: str):
+    """Serve forecast JSONs at the same path the static deploy uses.
+
+    Lets the dashboard use one fetch path (`./data/forecasts/...`) in both
+    local dev and GitHub Pages — no fallback needed.
+    """
+    return send_from_directory(config.FORECAST_DIR, name)
+
+
 @app.route("/api/runs")
 def api_runs():
     return jsonify(_list_runs())

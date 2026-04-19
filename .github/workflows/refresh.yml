@@ -1,0 +1,51 @@
+name: Refresh forecast
+
+on:
+  schedule:
+    # DWD publishes the full RUC-EPS run ~30-40 min after the init hour.
+    # We fire at :45 UTC to pick up the latest fully-published run.
+    - cron: "45 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-forecast
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install eccodes
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libeccodes-dev libeccodes-tools
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Python deps
+        run: pip install -r requirements.txt
+
+      - name: Fetch latest forecast run
+        run: python main.py --runs 1
+
+      - name: Trim old runs (keep newest 12 JSONs)
+        run: python cleanup.py --keep-last 12
+
+      - name: Commit new forecasts if anything changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/forecasts
+          if git diff --cached --quiet; then
+            echo "No forecast changes."
+          else
+            git commit -m "auto: refresh forecasts $(date -u +'%Y-%m-%dT%H:%MZ')"
+            git push
+          fi

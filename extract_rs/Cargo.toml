@@ -1,0 +1,18 @@
+[package]
+name = "extract_rs"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "extract_rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.22", features = ["extension-module"] }
+eccodes = { version = "0.14", default-features = false }
+rayon = "1.10"
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3

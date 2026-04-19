@@ -60,6 +60,11 @@ def build_variable_output(series: dict[str, list[tuple[np.datetime64, float]]],
         times = times[1:]
         matrix = matrix[:, 1:]
 
+    # Optional unit shift (e.g. Kelvin → Celsius for T_2M)
+    offset = var_cfg.get("offset")
+    if offset is not None:
+        matrix = matrix + float(offset)
+
     percentiles = {f"p{p}": np.nanpercentile(matrix, p, axis=0).tolist()
                    for p in config.PERCENTILES}
     prob_exceeds = {str(t): ((matrix >= t).mean(axis=0)).tolist()

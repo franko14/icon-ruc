@@ -1,16 +1,28 @@
-"""Single-point extraction from GRIB files."""
+"""Single-point extraction from GRIB files.
+
+Prefers the native `extract_rs` Rust extension (parallel, ~5-10× faster).
+Falls back to a pure-Python xarray/cfgrib path if the extension is absent.
+"""
 from __future__ import annotations
 
 from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
-import xarray as xr
 
 from . import config, discover
 
+try:
+    import extract_rs  # type: ignore
+    _RUST_AVAILABLE = True
+except ImportError:
+    _RUST_AVAILABLE = False
 
-def _read_point(path: Path, grib_var: str, cell_index: int) -> tuple[np.datetime64, float] | None:
+
+def _read_point_python(path: Path, grib_var: str, cell_index: int
+                       ) -> tuple[np.datetime64, float] | None:
+    """Fallback: pure-Python per-file extract using xarray + cfgrib."""
+    import xarray as xr  # local import so Rust users don't pay for it
     try:
         ds = xr.open_dataset(path, engine="cfgrib",
                              backend_kwargs={"indexpath": ""})
@@ -37,18 +49,40 @@ def extract_variable(paths: list[Path], variable: str, cell_index: int
     """Extract point series per ensemble from local GRIB files.
 
     Returns {ensemble_id: [(time, value), ...]} sorted by time.
+    Uses the Rust extension if available; otherwise falls back to xarray.
     """
     grib_var = config.VARIABLES[variable]["grib_var"]
     by_ens: dict[str, list[tuple[np.datetime64, float]]] = defaultdict(list)
 
+    # Group paths by ensemble first so we can pair Rust results back to them.
+    ens_paths: dict[str, list[Path]] = defaultdict(list)
     for path in paths:
         parsed = discover.parse_filename(path)
         if parsed is None or parsed[0] != variable:
             continue
         _, _, ensemble, _ = parsed
-        result = _read_point(path, grib_var, cell_index)
-        if result is None:
-            continue
-        by_ens[ensemble].append(result)
+        ens_paths[ensemble].append(path)
+
+    if _RUST_AVAILABLE:
+        # One parallel Rust call per variable — rayon scales across cores.
+        flat = [(ens, p) for ens, ps in ens_paths.items() for p in ps]
+        if not flat:
+            return {}
+        results = extract_rs.extract_points(
+            [str(p) for _, p in flat], cell_index, grib_var
+        )
+        for (ensemble, _path), result in zip(flat, results):
+            if result is None:
+                continue
+            epoch_s, value = result
+            t = np.datetime64(int(epoch_s), "s")
+            by_ens[ensemble].append((t, value))
+    else:
+        for ensemble, ps in ens_paths.items():
+            for path in ps:
+                result = _read_point_python(path, grib_var, cell_index)
+                if result is None:
+                    continue
+                by_ens[ensemble].append(result)
 
     return {ens: sorted(items, key=lambda x: x[0]) for ens, items in by_ens.items()}

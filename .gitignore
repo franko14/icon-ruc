@@ -43,8 +43,15 @@ htmlcov/
 # Jupyter Notebook
 .ipynb_checkpoints
 
-# Data directories
-data/*
+# Data directories — GRIBs and grid cache stay local;
+# forecast JSONs ARE committed so GitHub Pages can serve them.
+data/raw/
+data/grid/
+data/processed/
+data/weather/
+
+# Local-only: Claude's planning docs, not part of the app
+docs/superpowers/
 
 # IDE
 .vscode/
@@ -92,3 +99,8 @@ temp/
 Thumbs.db
 # Worktrees
 .worktrees/
+
+# Rust extension build artifacts
+extract_rs/target/
+extract_rs/Cargo.lock
+*.pyd

@@ -63,7 +63,21 @@ async def process_run(run_id: str, offline: bool = False) -> Path | None:
     with open(out_path, "w") as f:
         json.dump(output, f, separators=(",", ":"))
     print(f"  ✓ wrote {out_path}")
+    _write_index()
     return out_path
+
+
+def _write_index() -> None:
+    """Emit data/forecasts/index.json — the static catalog the dashboard reads."""
+    run_ids = sorted(
+        (p.stem for p in config.FORECAST_DIR.glob("*.json") if p.stem != "index"),
+        reverse=True,
+    )
+    idx_path = config.FORECAST_DIR / "index.json"
+    with open(idx_path, "w") as f:
+        json.dump({"runs": run_ids, "generated_at":
+                   datetime.now(timezone.utc).isoformat(timespec="seconds")},
+                  f, separators=(",", ":"))
 
 
 def resolve_runs(run_id: str | None = None, runs: int = 1,

@@ -23,9 +23,10 @@ pipeline/
   discover.py   DWD + local discovery, URL/filename helpers
   download.py   async aiohttp downloader, skips files already cached
   grid.py       ICON grid loader + KDTree index (pickled cache)
-  extract.py    lazy-open GRIB → extract nearest cell → close
+  extract.py    per-file point extraction — calls Rust ext if available, xarray fallback
   stats.py      deaccumulation, percentiles, exceedance probability
   run.py        orchestrator
+extract_rs/     Rust extension (pyo3 + eccodes + rayon) — parallel GRIB decode
 main.py         CLI entry point
 api.py          Flask API + static dashboard server
 cleanup.py      standalone GRIB cleanup by age
@@ -36,6 +37,19 @@ data/
   grid/         ICON grid NetCDF + pickled KDTree
   forecasts/    output JSON, one file per run_id
 ```
+
+## Rust extraction extension (optional but strongly recommended)
+
+`extract_rs/` is a small pyo3 crate that decodes GRIB messages in parallel via rayon. On a typical run it is **~11× faster** than the pure-Python path (full 20-ensemble × 169-step run: ~13 s vs ~2:30). The Python path still exists as a fallback if the extension isn't built.
+
+Build and install into `.venv`:
+
+```bash
+.venv/bin/pip install maturin
+.venv/bin/maturin develop --release --manifest-path extract_rs/Cargo.toml
+```
+
+Requires a Rust toolchain (`rustup` + `cargo ≥1.70`) and the eccodes C library (same lib cfgrib uses; Homebrew: `brew install eccodes`). The extension reads eccodes' `shortName` key directly — so `config.VARIABLES[...]["grib_var"]` must match the GRIB shortName (e.g. `max_i10fg`, not the xarray cfVarName `fg10`).
 
 ## Key commands
 

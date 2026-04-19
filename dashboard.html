@@ -6,236 +6,269 @@
 <title>ICON-D2-RUC-EPS · Bratislava</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uplot@1.6.31/dist/uPlot.min.css">
 <style>
+/* ── iMeteo.sk-matched visual identity ──────────────────
+   Palette sourced from imeteo.sk/css/global.min.css:
+   primary blue #206ff2, sun yellow #FFD92A, navy #19222a/#2b4672.
+*/
 :root{
-  --bg:#0b0d10;
-  --panel:#14171c;
-  --panel-2:#191d24;
-  --line:#232830;
-  --line-2:#2e3440;
-  --text:#e6eaf2;
-  --text-dim:#b1b8c5;
-  --muted:#7f8796;
-  --muted-2:#5b6270;
+  --bg:#ffffff;
+  --bg-alt:#f6f7f9;
+  --panel:#ffffff;
+  --panel-2:#f1f3f7;
+  --line:#e1e5ec;
+  --line-2:#c9d0db;
 
-  --precip:#d4a656;
-  --precip-2:rgba(212,166,86,0.55);
-  --precip-3:rgba(212,166,86,0.45);
-  --precip-4:rgba(212,166,86,0.22);
+  --ink:#19222a;
+  --ink-2:#2b4672;
+  --text:#19222a;
+  --text-dim:#545454;
+  --muted:#686868;
+  --muted-2:#8a94a2;
 
-  --wind:#6b94a8;
-  --wind-2:rgba(107,148,168,0.55);
-  --wind-3:rgba(107,148,168,0.45);
-  --wind-4:rgba(107,148,168,0.22);
+  /* iMeteo primary brand blue (used for precipitation — natural weather association) */
+  --precip:#206ff2;
+  --precip-2:rgba(32,111,242,0.55);
+  --precip-3:rgba(32,111,242,0.32);
+  --precip-4:rgba(32,111,242,0.14);
+  --precip-rgb:32,111,242;
 
-  --bad:#d96c6c;
-  --good:#7eb580;
-  --warn:#e0a55c;
+  /* iMeteo deep navy (used for wind) */
+  --wind:#2b4672;
+  --wind-2:rgba(43,70,114,0.55);
+  --wind-3:rgba(43,70,114,0.32);
+  --wind-4:rgba(43,70,114,0.14);
+  --wind-rgb:43,70,114;
 
-  --font-display:"Instrument Serif", "Iowan Old Style", serif;
-  /* --font-data and --font-ui intentionally resolve to the same family.
-     Keeping the tokens separate so a future split (e.g. sans for UI) is one-token. */
-  --font-data:"IBM Plex Mono", ui-monospace, Menlo, monospace;
-  --font-ui:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  /* Warm coral red for temperature (2 m air) */
+  --temp:#e5594a;
+  --temp-2:rgba(229,89,74,0.55);
+  --temp-3:rgba(229,89,74,0.32);
+  --temp-4:rgba(229,89,74,0.14);
+  --temp-rgb:229,89,74;
+
+  /* iMeteo sun-yellow logo accent — reserved for thresholds/alerts */
+  --sun:#ffd92a;
+  --sun-2:rgba(255,217,42,0.9);
+  --sun-ink:#6b5400;
+
+  --bad:#dc3741;
+  --good:#8dd542;
+
+  --font:"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --radius:8px;
+  --radius-sm:4px;
+  --shadow:0 1px 2px rgba(25,34,42,0.05), 0 2px 8px rgba(25,34,42,0.04);
+  --shadow-hover:0 2px 4px rgba(25,34,42,0.08), 0 8px 24px rgba(25,34,42,0.08);
 }
 *{box-sizing:border-box}
-html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
-  font-family:var(--font-ui);font-size:14px;line-height:1.5;
-  -webkit-font-smoothing:antialiased;
+html,body{
+  margin:0;padding:0;background:var(--bg-alt);color:var(--text);
+  font-family:var(--font);font-size:14px;line-height:1.55;
+  font-feature-settings:"tnum" 1, "cv02" 1, "cv11" 1;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
 }
-body{background:
-  radial-gradient(1200px 600px at 10% -10%, rgba(212,166,86,0.04), transparent 60%),
-  radial-gradient(1000px 500px at 110% 10%, rgba(107,148,168,0.04), transparent 60%),
-  var(--bg);
-  min-height:100vh;
-}
-a{color:var(--text);text-decoration:none}
+a{color:var(--precip);text-decoration:none}
+a:hover{text-decoration:underline}
 
-.page{max-width:1280px;margin:0 auto;padding:40px 32px 56px}
+.page{max-width:1200px;margin:0 auto;padding:32px 28px 56px}
 
 /* ── Header ─────────────────────────────────────────────── */
 .header{
   display:flex;align-items:flex-end;justify-content:space-between;gap:24px;
-  padding-bottom:20px;margin-bottom:32px;
-  border-bottom:1px solid var(--line);
-  flex-wrap:wrap;
+  padding:22px 26px;margin-bottom:28px;flex-wrap:wrap;
+  background:var(--ink);color:#fff;border-radius:var(--radius);
+  box-shadow:var(--shadow);
 }
-.brand{display:flex;flex-direction:column;gap:2px}
+.brand{display:flex;flex-direction:column;gap:4px;color:#fff}
+.brand-row{display:flex;align-items:center;gap:10px}
+.brand-dot{
+  display:inline-block;width:14px;height:14px;border-radius:50%;
+  background:var(--sun);
+  box-shadow:0 0 14px rgba(255,217,42,0.4);
+}
 .brand-eyebrow{
-  font-family:var(--font-data);font-size:10.5px;letter-spacing:0.18em;
-  color:var(--muted);text-transform:uppercase;font-weight:500;
+  font-size:10.5px;letter-spacing:0.18em;
+  color:rgba(255,255,255,0.55);text-transform:uppercase;font-weight:600;
 }
 .brand-title{
-  font-family:var(--font-display);font-size:36px;line-height:1;
-  font-style:italic;font-weight:400;letter-spacing:-0.01em;
+  font-size:22px;line-height:1.1;font-weight:700;letter-spacing:-0.01em;
 }
-.brand-title .loc{color:var(--text-dim);font-style:normal;font-weight:400}
+.brand-title .loc{color:rgba(255,255,255,0.6);font-weight:400;margin-left:10px;font-size:14px}
 .brand-sub{
-  font-family:var(--font-data);font-size:11px;color:var(--muted-2);
-  margin-top:6px;letter-spacing:0.02em;
+  font-size:12px;color:rgba(255,255,255,0.55);
+  margin-top:2px;letter-spacing:0.01em;
 }
 
 .header-meta{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
 .run-picker{display:flex;align-items:center;gap:10px}
 .run-picker label{
-  font-family:var(--font-data);font-size:10px;letter-spacing:0.16em;
-  color:var(--muted);text-transform:uppercase;
+  font-size:10px;letter-spacing:0.14em;
+  color:rgba(255,255,255,0.55);text-transform:uppercase;font-weight:600;
 }
 .run-picker select{
-  background:var(--panel);color:var(--text);
-  border:1px solid var(--line-2);border-radius:2px;
-  padding:7px 10px;font-family:var(--font-data);font-size:12px;
-  cursor:pointer;
-  appearance:none;-webkit-appearance:none;
-  padding-right:28px;
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%23b1b8c5' stroke-width='1.5'><path d='M2 2l4 4 4-4'/></svg>");
-  background-repeat:no-repeat;background-position:right 9px center;background-size:9px;
+  background:rgba(255,255,255,0.08);color:#fff;
+  border:1px solid rgba(255,255,255,0.15);border-radius:var(--radius-sm);
+  padding:7px 32px 7px 12px;font-family:var(--font);font-size:13px;font-weight:500;
+  cursor:pointer;appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%23ffffff' stroke-width='1.75'><path d='M2 2l4 4 4-4'/></svg>");
+  background-repeat:no-repeat;background-position:right 10px center;background-size:9px;
 }
-.run-picker select:hover{border-color:var(--muted)}
-.age{font-family:var(--font-data);font-size:11px;color:var(--muted)}
-
-/* ── Summary strip ──────────────────────────────────────── */
-.summary{
-  display:grid;grid-template-columns:1fr 1fr;gap:1px;
-  background:var(--line);border:1px solid var(--line);border-radius:3px;
-  margin-bottom:48px;overflow:hidden;
-}
-.sum-cell{background:var(--panel);padding:22px 24px;position:relative}
-.sum-cell[data-var="TOT_PREC"]{border-top:2px solid var(--precip)}
-.sum-cell[data-var="VMAX_10M"]{border-top:2px solid var(--wind)}
-.sum-label{
-  font-family:var(--font-data);font-size:10.5px;letter-spacing:0.18em;
-  color:var(--muted);text-transform:uppercase;margin-bottom:14px;
-}
-.sum-main{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
-.sum-value{
-  font-family:var(--font-display);font-style:italic;
-  font-size:58px;line-height:0.95;font-weight:400;
-  letter-spacing:-0.02em;
-}
-.sum-unit{
-  font-family:var(--font-ui);font-size:13px;color:var(--muted);
-  font-weight:500;
-}
-.sum-sub{
-  font-family:var(--font-data);font-size:11px;color:var(--text-dim);
-  margin-top:14px;display:flex;gap:18px;flex-wrap:wrap;
-}
-.sum-sub b{color:var(--text);font-weight:500}
-.spark{margin-top:14px;height:34px}
+.run-picker select:hover{background:rgba(255,255,255,0.14);border-color:rgba(255,255,255,0.25)}
+.age{font-size:11px;color:rgba(255,255,255,0.55)}
 
 /* ── Chart block ────────────────────────────────────────── */
-.block{margin-bottom:56px}
+.block{margin-bottom:32px}
 .block-head{
   display:flex;align-items:flex-start;justify-content:space-between;
   gap:24px;margin-bottom:14px;flex-wrap:wrap;
 }
-.block-title{display:flex;align-items:baseline;gap:14px}
+.block-title{display:flex;align-items:center;gap:10px}
 .block-title h2{
-  font-family:var(--font-display);font-style:italic;
-  margin:0;font-size:30px;font-weight:400;letter-spacing:-0.01em;
+  margin:0;font-size:15px;font-weight:700;letter-spacing:0.02em;
+  color:var(--ink);
 }
-.block-title .accent-dot{width:6px;height:6px;border-radius:1px;display:inline-block}
+.block-title .accent-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
 .block-title[data-var="TOT_PREC"] .accent-dot{background:var(--precip)}
 .block-title[data-var="VMAX_10M"] .accent-dot{background:var(--wind)}
+.block-title[data-var="T_2M"] .accent-dot{background:var(--temp)}
 .block-desc{
-  font-family:var(--font-data);font-size:11px;color:var(--muted);
-  margin-top:4px;letter-spacing:0.02em;
+  font-size:12px;color:var(--muted);
+  margin-top:3px;
 }
 
 .controls{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
 .ctrl{display:flex;align-items:center;gap:8px}
 .ctrl-label{
-  font-family:var(--font-data);font-size:10px;letter-spacing:0.14em;
+  font-size:10px;letter-spacing:0.14em;font-weight:700;
   text-transform:uppercase;color:var(--muted);
 }
 .seg{
-  display:flex;background:var(--panel);border:1px solid var(--line-2);
-  border-radius:2px;overflow:hidden;
+  display:flex;background:var(--panel-2);border:1px solid var(--line);
+  border-radius:var(--radius-sm);overflow:hidden;padding:2px;gap:2px;
 }
 .seg button{
-  font-family:var(--font-data);font-size:11px;
+  font-family:var(--font);font-size:11px;font-weight:600;
   background:transparent;color:var(--muted);border:0;
-  padding:6px 10px;cursor:pointer;
-  border-right:1px solid var(--line-2);
-  transition:all 120ms ease;
-  letter-spacing:0.02em;
+  padding:5px 10px;cursor:pointer;border-radius:3px;
+  transition:all 120ms ease;letter-spacing:0.02em;
 }
-.seg button:last-child{border-right:0}
-.seg button:hover{color:var(--text-dim);background:var(--panel-2)}
-.seg button.active{background:var(--text);color:var(--bg);font-weight:600}
-.seg[data-accent="precip"] button.active{background:var(--precip);color:var(--bg)}
-.seg[data-accent="wind"] button.active{background:var(--wind);color:var(--bg)}
+.seg button:hover{color:var(--ink);background:rgba(25,34,42,0.04)}
+.seg button.active{background:var(--ink);color:#fff}
+.seg[data-accent="precip"] button.active{background:var(--precip);color:#fff}
+.seg[data-accent="wind"] button.active{background:var(--wind);color:#fff}
+.seg[data-accent="temp"] button.active{background:var(--temp);color:#fff}
 
 .chart-wrap{
-  background:var(--panel);border:1px solid var(--line);border-radius:3px;
-  padding:14px 14px 10px;position:relative;overflow:hidden;
-}
-.chart-wrap::before{
-  content:"";position:absolute;top:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg, transparent, var(--line-2), transparent);
+  background:var(--panel);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:16px;position:relative;overflow:hidden;
 }
 .chart{height:340px}
 .readout{
-  display:flex;gap:24px;flex-wrap:wrap;padding:12px 16px 10px;
-  border-top:1px solid var(--line);margin:12px -14px -10px;
-  font-family:var(--font-data);font-size:11px;color:var(--text-dim);
-  min-height:40px;
+  display:flex;gap:22px;flex-wrap:wrap;padding:13px 16px 12px;
+  border-top:1px solid var(--line);margin:14px -16px -16px;
+  font-size:13px;color:var(--text-dim);
+  min-height:44px;background:var(--bg-alt);
+  border-radius:0 0 var(--radius) var(--radius);
 }
-.readout .time{color:var(--muted);letter-spacing:0.04em;margin-right:4px}
-.readout .key{color:var(--muted);margin-right:3px}
-.readout .val{color:var(--text);font-weight:500}
-.readout .sep{color:var(--muted-2);margin:0 6px}
+.readout .time{color:var(--muted);margin-right:4px;font-weight:600}
+.readout .key{color:var(--muted);margin-right:4px}
+.readout .val{color:var(--ink);font-weight:600}
+.readout .sep{color:var(--line-2);margin:0 4px}
 
 .legend{
-  display:flex;gap:22px;flex-wrap:wrap;margin-top:14px;
-  font-family:var(--font-data);font-size:10.5px;color:var(--muted);
-  letter-spacing:0.04em;
+  display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;padding:0 4px;
+  font-size:12.5px;color:var(--muted);
 }
-.legend .sw{display:inline-block;width:22px;height:8px;margin-right:6px;vertical-align:middle;border-radius:1px}
+.legend .sw{display:inline-block;width:22px;height:8px;margin-right:6px;vertical-align:middle;border-radius:2px}
 .legend[data-var="TOT_PREC"] .sw.outer{background:var(--precip-4)}
 .legend[data-var="TOT_PREC"] .sw.inner{background:var(--precip-3)}
 .legend[data-var="TOT_PREC"] .sw.median{background:var(--precip)}
 .legend[data-var="VMAX_10M"] .sw.outer{background:var(--wind-4)}
 .legend[data-var="VMAX_10M"] .sw.inner{background:var(--wind-3)}
 .legend[data-var="VMAX_10M"] .sw.median{background:var(--wind)}
-.legend .sw.threshold{background:var(--bad);height:2px;margin-bottom:3px}
+.legend[data-var="T_2M"] .sw.outer{background:var(--temp-4)}
+.legend[data-var="T_2M"] .sw.inner{background:var(--temp-3)}
+.legend[data-var="T_2M"] .sw.median{background:var(--temp)}
+.legend .sw.threshold{background:var(--sun);height:2px;margin-bottom:3px;box-shadow:0 0 6px rgba(255,217,42,0.5)}
+
+/* ── Evolution section ──────────────────────────────────── */
+.evolution-head{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:24px;
+  padding-top:24px;margin-bottom:18px;border-top:1px solid var(--line);
+  flex-wrap:wrap;
+}
+.evolution-head .title{
+  font-size:15px;font-weight:700;letter-spacing:0.02em;color:var(--ink);
+}
+.evolution-head .desc{font-size:12px;color:var(--muted);margin-top:3px}
+
+.run-chips{
+  display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;
+}
+.chip{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--font);font-size:11.5px;font-weight:600;
+  padding:6px 11px 6px 10px;
+  background:var(--panel);border:1px solid var(--line);
+  color:var(--muted);border-radius:999px;cursor:pointer;
+  transition:all 120ms ease;
+}
+.chip:hover{color:var(--ink);border-color:var(--line-2)}
+.chip .chip-dot{width:9px;height:9px;border-radius:50%;background:var(--line-2);display:inline-block;flex:none}
+.chip.active{color:var(--ink);background:var(--panel)}
+.chip.active[data-accent="precip"]{border-color:var(--precip);background:rgba(32,111,242,0.06)}
+.chip.active[data-accent="wind"]{border-color:var(--wind);background:rgba(43,70,114,0.06)}
+.chip.active[data-accent="temp"]{border-color:var(--temp);background:rgba(229,89,74,0.06)}
+.chip-actions{display:flex;gap:6px;margin-left:auto}
+.chip-action{
+  font-family:var(--font);font-size:10.5px;font-weight:600;
+  padding:5px 10px;color:var(--muted);background:var(--panel);
+  border:1px solid var(--line);border-radius:var(--radius-sm);cursor:pointer;
+  letter-spacing:0.06em;text-transform:uppercase;
+}
+.chip-action:hover{color:var(--ink);border-color:var(--line-2)}
 
 /* ── Footer ─────────────────────────────────────────────── */
 .footer{
-  margin-top:56px;padding-top:18px;border-top:1px solid var(--line);
+  margin-top:40px;padding-top:18px;border-top:1px solid var(--line);
   display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
-  font-family:var(--font-data);font-size:10.5px;color:var(--muted-2);
-  letter-spacing:0.04em;
+  font-size:11px;color:var(--muted-2);
 }
-.footer .dot{color:var(--muted-2);margin:0 8px}
+.footer a{color:var(--precip);font-weight:500}
+.footer .dot{color:var(--line-2);margin:0 8px}
 
 /* ── States ─────────────────────────────────────────────── */
 .err{
-  background:rgba(217,108,108,0.06);border:1px solid rgba(217,108,108,0.4);
-  color:var(--bad);padding:14px 18px;border-radius:3px;
-  font-family:var(--font-data);font-size:12px;margin-bottom:24px;
+  background:rgba(220,55,65,0.06);border:1px solid rgba(220,55,65,0.35);
+  color:var(--bad);padding:14px 18px;border-radius:var(--radius);
+  font-size:13px;margin-bottom:24px;
 }
 .empty{
-  color:var(--muted);font-family:var(--font-data);font-size:11px;
-  padding:60px 0;text-align:center;letter-spacing:0.04em;
+  color:var(--muted);font-size:12px;
+  padding:60px 0;text-align:center;
+}
+.loading{
+  color:var(--muted);font-size:11px;padding:30px 0;text-align:center;
+  letter-spacing:0.06em;text-transform:uppercase;font-weight:600;
 }
 
 /* ── uPlot overrides ────────────────────────────────────── */
-.uplot{background:transparent;color:var(--text)}
-.u-axis text{fill:var(--muted)!important}
-.u-axis .u-label{font-family:var(--font-data);font-size:10px;letter-spacing:0.08em}
-.u-select{background:rgba(230,234,242,0.04)!important}
+.uplot{background:transparent;color:var(--ink)}
+.u-axis text{fill:#2b3440!important}
+.u-axis .u-label{font-size:14px;letter-spacing:0.02em;font-weight:700}
+.u-select{background:rgba(32,111,242,0.08)!important}
 .u-cursor-x,.u-cursor-y{background:var(--line-2)!important}
 
 @media (max-width:720px){
-  .page{padding:24px 18px}
-  .brand-title{font-size:30px}
-  .sum-value{font-size:42px}
-  .block-title h2{font-size:24px}
-  .summary{grid-template-columns:1fr}
+  .page{padding:20px 14px}
+  .header{padding:18px 18px;flex-direction:column;align-items:flex-start;gap:14px}
+  .header-meta{align-items:flex-start;width:100%}
+  .brand-title{font-size:19px}
+  .sum-value{font-size:32px}
+  .summary{grid-template-columns:1fr;gap:10px}
   .chart{height:260px}
 }
 </style>
@@ -244,13 +277,16 @@ a{color:var(--text);text-decoration:none}
 <div class="page">
   <header class="header">
     <div class="brand">
-      <div class="brand-eyebrow">ICON-D2-RUC-EPS · DWD</div>
-      <div class="brand-title"><em>Bratislava</em> <span class="loc">/ 48.15°N 17.11°E</span></div>
+      <div class="brand-row">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="brand-eyebrow">ICON-D2-RUC-EPS · DWD ensemble</span>
+      </div>
+      <div class="brand-title">Bratislava <span class="loc">48.15°N · 17.11°E</span></div>
       <div class="brand-sub" id="brandSub"></div>
     </div>
     <div class="header-meta">
       <div class="run-picker">
-        <label for="runSelect">forecast run</label>
+        <label for="runSelect">Forecast run</label>
         <select id="runSelect"></select>
       </div>
       <div class="age" id="age"></div>
@@ -258,11 +294,11 @@ a{color:var(--text);text-decoration:none}
   </header>
 
   <div id="err" class="err" style="display:none"></div>
-  <div class="summary" id="summary"></div>
   <div id="charts"></div>
+  <div id="evolution"></div>
 
   <footer class="footer">
-    <span id="footerLeft">model: ICON-D2-RUC-EPS · 20-member ensemble</span>
+    <span id="footerLeft">Model: ICON-D2-RUC-EPS · 20-member ensemble · open data from <a href="https://opendata.dwd.de" target="_blank" rel="noopener">DWD</a></span>
     <span id="footerRight"></span>
   </footer>
 </div>
@@ -275,12 +311,16 @@ const fmtTime = (t) => new Date(t).toLocaleString([], {
   month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'
 });
 const fmtRunLabel = (id) => {
-  // 2025-10-28T0700 → "28 Oct · 07:00 UTC"
   const date = id.slice(0,10);
   const hm = id.slice(11);
   const d = new Date(date + 'T00:00:00Z');
   const m = d.toLocaleDateString('en', {month:'short', day:'numeric'});
   return `${m} · ${hm.slice(0,2)}:${hm.slice(2)} UTC`;
+};
+const fmtRunShort = (id) => {
+  const date = id.slice(5,10);
+  const hm = id.slice(11);
+  return `${date} ${hm.slice(0,2)}:${hm.slice(2)}`;
 };
 const fmtNum = (v, digits=1) => (v == null || Number.isNaN(v)) ? '–' : Number(v).toFixed(digits);
 const fmtAge = (iso) => {
@@ -294,16 +334,17 @@ const fmtAge = (iso) => {
 
 const VAR_META = {
   TOT_PREC: {
-    label:'Precipitation', short:'precip', accent:'precip',
+    label:'Precipitation', accent:'precip', rgb:'32,111,242',
     desc:'Ground-level precipitation rate, deaccumulated from model output',
-    unitShort:(u) => u.replace('/h',''),
-    isRate:true,
   },
   VMAX_10M: {
-    label:'Wind Gust', short:'wind', accent:'wind',
+    label:'Wind Gust', accent:'wind', rgb:'43,70,114',
     desc:'Maximum instantaneous wind gust at 10 m above ground',
-    unitShort:(u) => u,
-    isRate:false,
+  },
+  T_2M: {
+    label:'Temperature', accent:'temp', rgb:'229,89,74',
+    desc:'Air temperature at 2 m above ground',
+    allowNegative:true,
   },
 };
 
@@ -314,38 +355,51 @@ const TIME_RANGES = [
   {key:'all', label:'ALL', hours:Infinity},
 ];
 const SPREADS = [
-  {key:'wide', label:'P10–90', pairs:[['p10','p90'],['p25','p75']]},
-  {key:'inner', label:'P25–75', pairs:[['p25','p75']]},
-  {key:'median', label:'P50', pairs:[]},
+  {key:'wide', label:'P10–90'},
+  {key:'inner', label:'P25–75'},
+  {key:'median', label:'P50'},
 ];
 
 const state = {
   runs: [],
-  current: null,
   data: null,
-  controls: {},        // { TOT_PREC: {range, spread, threshold}, VMAX_10M: {...} }
+  allRuns: {},
+  controls: {},
+  evolutionSelected: new Set(),
 };
+const plots = {};
+const evolutionPlots = {};
+const readouts = {};
 
-const plots = {};      // varName -> uPlot instance
-const readouts = {};   // varName -> readout DOM element
-
+// Static-first: fetch JSON directly from data/forecasts/ when served as static files
+// (GitHub Pages). Fall back to the Flask API when the static path 404s (local dev).
 async function fetchJSON(url){
-  const r = await fetch(url);
+  const r = await fetch(url, {cache: 'no-store'});
   if (!r.ok) throw new Error(`${url}: ${r.status}`);
   return r.json();
 }
-
-function showError(msg){
-  const el = $('err'); el.style.display = 'block'; el.textContent = msg;
+async function fetchRuns(){
+  try {
+    const idx = await fetchJSON('./data/forecasts/index.json');
+    return idx.runs || [];
+  } catch(e){
+    return fetchJSON('/api/runs');
+  }
 }
+async function fetchRun(runId){
+  try {
+    return await fetchJSON(`./data/forecasts/${runId}.json`);
+  } catch(e){
+    return fetchJSON(`/api/runs/${runId}`);
+  }
+}
+function showError(msg){ $('err').style.display = 'block'; $('err').textContent = msg; }
 function clearError(){ $('err').style.display = 'none'; }
-
 function parseTimes(times){ return times.map(t => new Date(t).getTime()); }
 
 function sliceByRange(times, values, hours){
   if (hours === Infinity) return {times, values};
-  const start = times[0];
-  const end = start + hours * 3600 * 1000;
+  const end = times[0] + hours * 3600 * 1000;
   const t = [], v = [];
   for (let i = 0; i < times.length; i++) {
     if (times[i] <= end) { t.push(times[i]); v.push(values[i]); }
@@ -353,98 +407,11 @@ function sliceByRange(times, values, hours){
   return {times:t, values:v};
 }
 
-// ── summary cards ───────────────────────────────────────
-function renderSummary(data){
-  const sum = $('summary');
-  sum.innerHTML = '';
-  for (const [varName, meta] of Object.entries(VAR_META)){
-    const vd = data.variables[varName];
-    const cell = document.createElement('div');
-    cell.className = 'sum-cell';
-    cell.dataset.var = varName;
-
-    if (!vd || !vd.times.length){
-      cell.innerHTML = `
-        <div class="sum-label">${meta.label} · next 24h</div>
-        <div class="sum-main"><div class="sum-value">–</div></div>
-        <div class="sum-sub"><span>no data</span></div>
-      `;
-      sum.appendChild(cell); continue;
-    }
-
-    const times = parseTimes(vd.times);
-    const p50 = vd.percentiles.p50;
-    const p90 = vd.percentiles.p90;
-    const {times:t24, values:m24} = sliceByRange(times, p50, 24);
-    const {values:p90_24} = sliceByRange(times, p90, 24);
-    const peakP50 = m24.length ? Math.max(...m24) : null;
-    const peakP90 = p90_24.length ? Math.max(...p90_24) : null;
-
-    let headline, headlineUnit, hint;
-    if (meta.isRate){
-      const stepHrs = times.length > 1 ? (times[1] - times[0]) / 3600000 : 1;
-      const totalMedian = m24.reduce((s, v) => s + (v || 0), 0) * stepHrs;
-      headline = fmtNum(totalMedian, 1);
-      headlineUnit = 'mm total · median';
-      hint = `peak rate <b>${fmtNum(peakP50, 2)}</b> ${vd.unit}`;
-    } else {
-      headline = fmtNum(peakP50, 1);
-      headlineUnit = `${vd.unit} · peak median`;
-      hint = `median ${fmtNum(m24.length ? m24.reduce((a,b)=>a+b,0)/m24.length : NaN, 1)} ${vd.unit}`;
-    }
-
-    cell.innerHTML = `
-      <div class="sum-label">${meta.label} · next 24h</div>
-      <div class="sum-main">
-        <div class="sum-value">${headline}</div>
-        <div class="sum-unit">${headlineUnit}</div>
-      </div>
-      <div class="sum-sub">
-        <span>${hint}</span>
-        <span><b>p90</b> peak ${fmtNum(peakP90, 1)} ${vd.unit}</span>
-        <span><b>${p50.length}</b> steps</span>
-      </div>
-      <div class="spark" id="spark-${varName}"></div>
-    `;
-    sum.appendChild(cell);
-
-    // Sparkline — tiny band
-    requestAnimationFrame(() => {
-      const el = cell.querySelector('.spark');
-      const W = el.clientWidth || 260;
-      const {times:ts, values:p10v} = sliceByRange(times, vd.percentiles.p10, 24);
-      const {values:p90v} = sliceByRange(times, vd.percentiles.p90, 24);
-      const {values:p50v} = sliceByRange(times, vd.percentiles.p50, 24);
-      const tsSec = ts.map(t => t/1000);
-      const accent = meta.accent === 'precip' ? '#d4a656' : '#6b94a8';
-      const accent4 = meta.accent === 'precip' ? 'rgba(212,166,86,0.2)' : 'rgba(107,148,168,0.2)';
-      const opts = {
-        width:W, height:34,
-        cursor:{show:false}, legend:{show:false}, select:{show:false},
-        scales:{x:{time:true}, y:{auto:true, range:(u,min,max) => [0, max]}},
-        axes:[{show:false},{show:false}],
-        series:[
-          {}, {fill:accent4, stroke:'transparent', points:{show:false}, band:true},
-          {fill:accent4, stroke:'transparent', points:{show:false}},
-          {stroke:accent, width:1.25, points:{show:false}},
-        ],
-        bands:[{series:[1,2], fill:accent4}],
-        padding:[0,0,0,0],
-      };
-      new uPlot(opts, [tsSec, p10v, p90v, p50v], el);
-    });
-  }
-}
-
-// ── controls ───────────────────────────────────────────
+// ── per-variable controls ──────────────────────────────
 function ensureControls(varName, vd){
   if (state.controls[varName]) return;
   const thresholds = Object.keys(vd.probability_exceeds || {});
-  state.controls[varName] = {
-    range: '24h',
-    spread: 'wide',
-    threshold: thresholds[0] || null,   // selected threshold (string)
-  };
+  state.controls[varName] = { range:'24h', spread:'wide', threshold:thresholds[0] || null };
 }
 
 function makeSegControl(label, options, accent, activeKey, onChange){
@@ -470,7 +437,7 @@ function makeSegControl(label, options, accent, activeKey, onChange){
   return el;
 }
 
-// ── chart block ────────────────────────────────────────
+// ── detail chart block ─────────────────────────────────
 function renderBlock(parent, varName, data){
   const meta = VAR_META[varName];
   const vd = data.variables[varName];
@@ -499,7 +466,6 @@ function renderBlock(parent, varName, data){
     block.querySelector('.chart').innerHTML = '<div class="empty">no data for this variable</div>';
     return;
   }
-
   ensureControls(varName, vd);
   renderControls(varName, vd);
   readouts[varName] = block.querySelector('.readout');
@@ -512,7 +478,6 @@ function renderControls(varName, vd){
   c.innerHTML = '';
   const accent = VAR_META[varName].accent;
   const cur = state.controls[varName];
-
   c.appendChild(makeSegControl('Time', TIME_RANGES, accent, cur.range, (k) => {
     cur.range = k; drawChart(varName, vd);
   }));
@@ -533,7 +498,6 @@ function renderControls(varName, vd){
 function renderLegend(varName, vd){
   const l = $(`legend-${varName}`);
   const cur = state.controls[varName];
-  const spread = SPREADS.find(s => s.key === cur.spread);
   let html = '';
   if (cur.spread === 'wide'){
     html += `<span><span class="sw outer"></span>P10–P90 range</span>`;
@@ -548,7 +512,7 @@ function renderLegend(varName, vd){
   l.innerHTML = html;
 }
 
-// ── uPlot chart ────────────────────────────────────────
+// ── detail uPlot chart ─────────────────────────────────
 function drawChart(varName, vd){
   const el = $(`chart-${varName}`);
   el.innerHTML = '';
@@ -563,14 +527,12 @@ function drawChart(varName, vd){
   }
   const t = sliceByRange(times, vd.percentiles.p50, range.hours).times.map(ms => ms/1000);
 
-  const accent = meta.accent === 'precip' ? '#d4a656' : '#6b94a8';
-  const outer4 = meta.accent === 'precip' ? 'rgba(212,166,86,0.22)' : 'rgba(107,148,168,0.22)';
-  const inner3 = meta.accent === 'precip' ? 'rgba(212,166,86,0.45)' : 'rgba(107,148,168,0.45)';
-  const glow   = meta.accent === 'precip' ? 'rgba(212,166,86,0.25)' : 'rgba(107,148,168,0.25)';
+  const accent = `rgb(${meta.rgb})`;
+  const outer4 = `rgba(${meta.rgb},0.14)`;
+  const inner3 = `rgba(${meta.rgb},0.32)`;
+  const glow   = `rgba(${meta.rgb},0.2)`;
 
-  // Data layout: [times, p10, p90, p25, p75, p50]
   const data = [t, sliced.p10, sliced.p90, sliced.p25, sliced.p75, sliced.p50];
-
   const series = [
     {},
     {stroke:'transparent', points:{show:false}, label:'p10', show: cur.spread === 'wide'},
@@ -579,14 +541,10 @@ function drawChart(varName, vd){
     {stroke:'transparent', points:{show:false}, label:'p75', show: cur.spread !== 'median'},
     {stroke:accent, width:2.0, points:{show:false}, label:'p50'},
   ];
-
   const bands = [];
-  // uPlot bands: series[0] is the HIGH (top) edge, series[1] is the LOW (bottom) edge.
-  // Default dir is -1 (fill downwards from high to low). Data layout: 1=p10, 2=p90, 3=p25, 4=p75.
   if (cur.spread === 'wide') bands.push({series:[2,1], fill:outer4});
   if (cur.spread !== 'median') bands.push({series:[4,3], fill:inner3});
 
-  // Threshold horizontal line — drawn via custom hook
   const thresholdVal = cur.threshold ? Number(cur.threshold) : null;
   const probs = vd.probability_exceeds || {};
   const probSeries = cur.threshold ? sliceByRange(times, probs[cur.threshold] || [], range.hours).values : null;
@@ -598,63 +556,40 @@ function drawChart(varName, vd){
     scales: {
       x:{time:true},
       y:{auto:true, range:(u, dmin, dmax) => {
-        const top = Math.max(dmax, thresholdVal || 0);
+        const hasThresh = thresholdVal != null;
+        if (meta.allowNegative){
+          // Pad symmetrically around data; include threshold if set
+          let lo = Math.min(dmin, hasThresh ? thresholdVal : dmin);
+          let hi = Math.max(dmax, hasThresh ? thresholdVal : dmax);
+          const pad = Math.max((hi - lo) * 0.08, 0.5);
+          return [lo - pad, hi + pad];
+        }
+        const top = Math.max(dmax, hasThresh ? thresholdVal : 0);
         return [0, top * 1.05 + 0.001];
       }},
     },
     axes: [
-      {
-        stroke:'#7f8796',
-        grid:{stroke:'rgba(255,255,255,0.04)', width:1},
-        ticks:{stroke:'#2e3440', width:1, size:4},
-        font:'10px "IBM Plex Mono", monospace',
-        values:(u, vals) => {
-          const seenDays = new Set();
-          return vals.map(v => {
-            const d = new Date(v*1000);
-            const day = d.toLocaleDateString([], {month:'short', day:'numeric'});
-            const hm  = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
-            if (!seenDays.has(day)){ seenDays.add(day); return `${day} ${hm}`; }
-            return hm;
-          });
-        },
-      },
-      {
-        stroke:'#7f8796',
-        grid:{stroke:'rgba(255,255,255,0.04)', width:1},
-        ticks:{stroke:'#2e3440', width:1, size:4},
-        size:64,
-        font:'10px "IBM Plex Mono", monospace',
-        label:vd.unit,
-        labelSize:30,
-        labelFont:'10px "IBM Plex Mono", monospace',
-        labelGap:6,
-      },
+      axisOpts({withDayLabel:true}),
+      axisOpts({side:1, unit:vd.unit}),
     ],
     series, bands,
     legend:{show:false},
     cursor:{
       drag:{setScale:false},
-      points:{size:6, stroke:accent, fill:'#0b0d10', width:1.5},
-      focus:{prox:18},
-      x:true, y:false,
+      points:{size:6, stroke:accent, fill:'#ffffff', width:1.5},
+      focus:{prox:18}, x:true, y:false,
     },
     hooks: {
       draw: [
         (u) => {
-          // p50 glow — wider, lower-alpha stroke under the main line.
-          // Index 5 matches the data layout [t, p10, p90, p25, p75, p50] declared above.
-          const P50_IDX = 5;
-          const xs = u.data[0];
-          const ys = u.data[P50_IDX];
+          // p50 glow
+          const xs = u.data[0], ys = u.data[5];
           if (!xs || !ys || !xs.length) return;
           const ctx = u.ctx;
-          ctx.save();
-          ctx.beginPath();
+          ctx.save(); ctx.beginPath();
           ctx.strokeStyle = glow;
           ctx.lineWidth = 5;
-          ctx.lineCap = 'round';
-          ctx.lineJoin = 'round';
+          ctx.lineCap = 'round'; ctx.lineJoin = 'round';
           let started = false;
           for (let i = 0; i < xs.length; i++){
             if (ys[i] == null) { started = false; continue; }
@@ -663,28 +598,23 @@ function drawChart(varName, vd){
             if (!started) { ctx.moveTo(x, y); started = true; }
             else { ctx.lineTo(x, y); }
           }
-          ctx.stroke();
-          ctx.restore();
+          ctx.stroke(); ctx.restore();
         },
         (u) => {
           if (thresholdVal == null) return;
           const ctx = u.ctx;
           const yPos = u.valToPos(thresholdVal, 'y', true);
           if (Number.isNaN(yPos)) return;
-          ctx.save();
-          ctx.beginPath();
-          ctx.strokeStyle = 'rgba(217,108,108,0.55)';
-          ctx.setLineDash([3,3]);
-          ctx.lineWidth = 1;
+          ctx.save(); ctx.beginPath();
+          ctx.strokeStyle = '#ffc800';
+          ctx.setLineDash([4,3]); ctx.lineWidth = 1.25;
           ctx.moveTo(u.bbox.left, yPos);
           ctx.lineTo(u.bbox.left + u.bbox.width, yPos);
-          ctx.stroke();
-          ctx.setLineDash([]);
-          // label
-          ctx.font = '10px "IBM Plex Mono", monospace';
-          ctx.fillStyle = 'rgba(217,108,108,0.9)';
+          ctx.stroke(); ctx.setLineDash([]);
+          ctx.font = '600 13px Inter, sans-serif';
+          ctx.fillStyle = '#6b5400';
           ctx.textAlign = 'right';
-          ctx.fillText(`≥${thresholdVal} ${vd.unit}`, u.bbox.left + u.bbox.width - 4, yPos - 4);
+          ctx.fillText(`≥${thresholdVal} ${vd.unit}`, u.bbox.left + u.bbox.width - 4, yPos - 7);
           ctx.restore();
         }
       ],
@@ -692,30 +622,54 @@ function drawChart(varName, vd){
         (u) => {
           const i = u.cursor.idx;
           if (i == null) { renderReadout(varName, null, vd, probSeries); return; }
-          const row = {
+          renderReadout(varName, {
             time: t[i]*1000,
             p10: sliced.p10[i], p25: sliced.p25[i], p50: sliced.p50[i],
             p75: sliced.p75[i], p90: sliced.p90[i],
             prob: probSeries ? probSeries[i] : null,
-          };
-          renderReadout(varName, row, vd, probSeries);
+          }, vd, probSeries);
         }
       ],
     },
   };
 
-  // Kill previous plot if any
   if (plots[varName]) { try { plots[varName].destroy(); } catch(e){} }
   plots[varName] = new uPlot(opts, data, el);
-
   renderLegend(varName, vd);
   renderReadout(varName, null, vd, probSeries);
+}
+
+function axisOpts({side=0, withDayLabel=false, unit=null} = {}){
+  const base = {
+    stroke:'#2b3440',
+    grid:{stroke:'rgba(25,34,42,0.06)', width:1},
+    ticks:{stroke:'#c9d0db', width:1, size:7},
+    font:'500 14px Inter, sans-serif',
+    size:54,
+    gap:8,
+  };
+  if (side === 1){
+    return {...base, size:96, label:unit, labelSize:34,
+            labelFont:'700 15px Inter, sans-serif', labelGap:10};
+  }
+  if (withDayLabel){
+    base.values = (u, vals) => {
+      const seenDays = new Set();
+      return vals.map(v => {
+        const d = new Date(v*1000);
+        const day = d.toLocaleDateString([], {month:'short', day:'numeric'});
+        const hm  = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
+        if (!seenDays.has(day)){ seenDays.add(day); return `${day} ${hm}`; }
+        return hm;
+      });
+    };
+  }
+  return base;
 }
 
 function renderReadout(varName, row, vd, probSeries){
   const el = readouts[varName];
   if (!el) return;
-  const meta = VAR_META[varName];
   const cur = state.controls[varName];
   if (!row){
     el.innerHTML = `
@@ -742,26 +696,197 @@ function renderReadout(varName, row, vd, probSeries){
   }
   if (cur.threshold && row.prob != null){
     const pct = Math.round(row.prob * 100);
+    const color = pct >= 50 ? 'var(--sun-ink)' : 'var(--ink)';
     html += `<span class="sep">·</span>`;
-    html += `<span class="key">P(≥${cur.threshold})</span><span class="val" style="color:${pct>=50?'var(--warn)':'var(--text)'}">${pct}%</span>`;
+    html += `<span class="key">P(≥${cur.threshold})</span><span class="val" style="color:${color}">${pct}%</span>`;
   }
   el.innerHTML = html;
+}
+
+// ── evolution ──────────────────────────────────────────
+function shadeFor(rgb, i, n){
+  const alpha = n <= 1 ? 1.0 : 1.0 - (i / (n - 1)) * 0.7;
+  return `rgba(${rgb},${alpha.toFixed(3)})`;
+}
+
+function renderEvolution(){
+  const root = $('evolution');
+  root.innerHTML = '';
+  if (!state.runs.length) return;
+  const selectedRuns = [...state.runs].filter(r => state.evolutionSelected.has(r));
+
+  const head = document.createElement('div');
+  head.className = 'evolution-head';
+  head.innerHTML = `
+    <div>
+      <div class="title">Forecast Evolution</div>
+      <div class="desc">P50 median across recent runs — newer runs shown darker; click chips to toggle</div>
+    </div>
+    <div class="chip-actions">
+      <button class="chip-action" id="evAll">All</button>
+      <button class="chip-action" id="evNone">None</button>
+      <button class="chip-action" id="evLast4">Last 4</button>
+    </div>
+  `;
+  root.appendChild(head);
+
+  for (const [varName, meta] of Object.entries(VAR_META)){
+    const section = document.createElement('section');
+    section.className = 'block';
+    section.innerHTML = `
+      <div class="block-head">
+        <div>
+          <div class="block-title" data-var="${varName}">
+            <span class="accent-dot"></span>
+            <h2>${meta.label} · run evolution</h2>
+          </div>
+          <div class="block-desc">P50 median from each selected run</div>
+        </div>
+      </div>
+      <div class="run-chips" id="chips-${varName}"></div>
+      <div class="chart-wrap">
+        <div class="chart" id="evchart-${varName}"></div>
+      </div>
+    `;
+    root.appendChild(section);
+
+    renderChips(varName, selectedRuns);
+    drawEvolutionChart(varName, selectedRuns);
+  }
+
+  head.querySelector('#evAll').addEventListener('click', () => {
+    state.evolutionSelected = new Set(state.runs);
+    renderEvolution();
+  });
+  head.querySelector('#evNone').addEventListener('click', () => {
+    state.evolutionSelected = new Set();
+    renderEvolution();
+  });
+  head.querySelector('#evLast4').addEventListener('click', () => {
+    state.evolutionSelected = new Set(state.runs.slice(0, 4));
+    renderEvolution();
+  });
+}
+
+function renderChips(varName, selectedRuns){
+  const el = $(`chips-${varName}`);
+  const meta = VAR_META[varName];
+  el.innerHTML = '';
+  const N = selectedRuns.length;
+  state.runs.forEach(runId => {
+    const chip = document.createElement('button');
+    chip.className = 'chip';
+    chip.dataset.accent = meta.accent;
+    const isActive = state.evolutionSelected.has(runId);
+    if (isActive) chip.classList.add('active');
+    const idxInSelected = selectedRuns.indexOf(runId);
+    const dotColor = isActive && idxInSelected >= 0
+      ? shadeFor(meta.rgb, idxInSelected, N)
+      : 'var(--line-2)';
+    chip.innerHTML = `
+      <span class="chip-dot" style="background:${dotColor}"></span>
+      ${fmtRunShort(runId)}
+    `;
+    chip.addEventListener('click', () => {
+      if (state.evolutionSelected.has(runId)) state.evolutionSelected.delete(runId);
+      else state.evolutionSelected.add(runId);
+      renderEvolution();
+    });
+    el.appendChild(chip);
+  });
+}
+
+function drawEvolutionChart(varName, selectedRuns){
+  const el = $(`evchart-${varName}`);
+  el.innerHTML = '';
+  if (evolutionPlots[varName]) { try { evolutionPlots[varName].destroy(); } catch(e){} }
+  if (!selectedRuns.length){
+    el.innerHTML = '<div class="empty">select at least one run above to see evolution</div>';
+    return;
+  }
+
+  const meta = VAR_META[varName];
+  const timelineSet = new Set();
+  const perRun = [];
+  for (const runId of selectedRuns){
+    const vd = state.allRuns[runId]?.variables[varName];
+    if (!vd || !vd.times.length) { perRun.push({runId, map:null}); continue; }
+    const map = new Map();
+    for (let i = 0; i < vd.times.length; i++){
+      const t = new Date(vd.times[i]).getTime() / 1000;
+      timelineSet.add(t);
+      map.set(t, vd.percentiles.p50[i]);
+    }
+    perRun.push({runId, map, unit: vd.unit});
+  }
+  if (timelineSet.size === 0){
+    el.innerHTML = '<div class="empty">no data for selected runs</div>';
+    return;
+  }
+  const timeline = [...timelineSet].sort((a,b) => a - b);
+
+  const data = [timeline];
+  const series = [{}];
+  const unit = perRun.find(r => r.unit)?.unit || '';
+  const N = selectedRuns.length;
+  perRun.forEach((r, i) => {
+    const vals = timeline.map(t => r.map ? (r.map.has(t) ? r.map.get(t) : null) : null);
+    data.push(vals);
+    const color = shadeFor(meta.rgb, i, N);
+    series.push({
+      stroke: color,
+      width: i === 0 ? 2.0 : 1.35,
+      points: {show:false},
+      label: fmtRunShort(r.runId),
+      spanGaps: false,
+    });
+  });
+
+  const meta2 = VAR_META[varName];
+  const opts = {
+    width: el.clientWidth || 900,
+    height: 340,
+    padding: [14, 60, 10, 10],
+    scales: {
+      x:{time:true},
+      y:{auto:true, range:(u, dmin, dmax) => {
+        if (meta2.allowNegative){
+          const pad = Math.max((dmax - dmin) * 0.08, 0.5);
+          return [dmin - pad, dmax + pad];
+        }
+        return [0, Math.max(dmax, 0.001) * 1.05];
+      }},
+    },
+    axes: [
+      axisOpts({withDayLabel:true}),
+      axisOpts({side:1, unit}),
+    ],
+    series,
+    legend:{show:false},
+    cursor:{
+      drag:{setScale:false},
+      points:{size:5, fill:'#ffffff', width:1.5},
+      focus:{prox:18}, x:true, y:false,
+    },
+  };
+  evolutionPlots[varName] = new uPlot(opts, data, el);
 }
 
 // ── orchestration ──────────────────────────────────────
 async function loadRun(runId){
   clearError();
   try {
-    const data = await fetchJSON(`/api/runs/${runId}`);
+    let data = state.allRuns[runId];
+    if (!data) {
+      data = await fetchRun(runId);
+      state.allRuns[runId] = data;
+    }
     state.data = data;
-    state.controls = {};    // reset per-run (fresh thresholds may differ)
-    $('brandSub').textContent =
-      `nearest grid cell ${fmtNum(data.grid_distance_km, 2)} km from target`;
+    state.controls = {};
+    $('brandSub').textContent = `nearest grid cell ${fmtNum(data.grid_distance_km, 2)} km from target`;
     $('age').textContent = fmtAge(data.generated_at);
-    $('footerRight').textContent =
-      `run ${fmtRunLabel(runId)} · generated ${data.generated_at}`;
+    $('footerRight').textContent = `run ${fmtRunLabel(runId)} · generated ${data.generated_at}`;
 
-    renderSummary(data);
     const charts = $('charts');
     charts.innerHTML = '';
     for (const varName of Object.keys(VAR_META)){
@@ -774,7 +899,7 @@ async function loadRun(runId){
 
 async function init(){
   try {
-    const runs = await fetchJSON('/api/runs');
+    const runs = await fetchRuns();
     state.runs = runs;
     if (!runs.length){
       showError('No forecast runs available. Run `python main.py` to generate one.');
@@ -786,7 +911,15 @@ async function init(){
     sel.addEventListener('change', () => loadRun(sel.value));
     await loadRun(runs[0]);
 
-    // Redraw on resize (debounced)
+    $('evolution').innerHTML = '<div class="loading">loading run history…</div>';
+    const others = runs.filter(r => !state.allRuns[r]);
+    await Promise.all(others.map(async r => {
+      try { state.allRuns[r] = await fetchRun(r); } catch(e){}
+    }));
+
+    state.evolutionSelected = new Set(runs.slice(0, Math.min(4, runs.length)));
+    renderEvolution();
+
     let tmo;
     window.addEventListener('resize', () => {
       clearTimeout(tmo);
@@ -796,8 +929,8 @@ async function init(){
             const vd = state.data.variables[varName];
             if (vd && vd.times.length) drawChart(varName, vd);
           }
-          renderSummary(state.data);
         }
+        renderEvolution();
       }, 180);
     });
   } catch (e) {

@@ -9,6 +9,17 @@ python -m venv .venv
 .venv/bin/pip install -r requirements.txt
 ```
 
+### Rust extension (optional, ~11× faster)
+
+The GRIB extraction is also available as a Rust/pyo3 extension using rayon for parallel decoding. Build it once into the venv:
+
+```bash
+.venv/bin/pip install maturin
+.venv/bin/maturin develop --release --manifest-path extract_rs/Cargo.toml
+```
+
+Requires a Rust toolchain (`rustup`) and the `eccodes` C library (macOS: `brew install eccodes`). If the extension isn't built, `pipeline/extract.py` falls back to a pure-Python xarray/cfgrib path automatically.
+
 ## Run
 
 ```bash
@@ -50,6 +61,28 @@ Open `http://127.0.0.1:5000/` in a browser. The dashboard reads from `data/forec
 ```bash
 .venv/bin/python -m pytest tests/
 ```
+
+## Deploy to GitHub Pages (free, 24/7)
+
+The dashboard is fully static once the JSONs exist, so the whole stack is free:
+- **GitHub Actions** runs `main.py` every hour at `:45 UTC` (DWD publishes complete RUC-EPS runs ~30–40 min after each init hour)
+- **GitHub Pages** serves `dashboard.html` + `data/forecasts/*.json` directly from the repo
+
+**One-time setup**
+
+1. Push this repo to a public GitHub repository (private works too but uses your 2,000 min/month Actions quota).
+2. GitHub → Settings → Actions → General → Workflow permissions → **Read and write permissions** (so the scheduled job can commit back).
+3. GitHub → Settings → Pages → Source: **Deploy from a branch** · Branch: `main` · Folder: `/ (root)`.
+4. Wait a couple of minutes, then your dashboard is live at `https://<username>.github.io/<repo>/`.
+
+The workflow at `.github/workflows/refresh.yml` then:
+- Fires hourly at `:45 UTC`
+- Installs `libeccodes-dev` + Python deps
+- Runs `main.py --runs 1` (downloads ~1,740 GRIBs, extracts the Bratislava cell, writes one JSON)
+- Runs `cleanup.py --keep-last 12` to trim old JSONs
+- Commits the JSONs back to `main` if anything changed
+
+The dashboard auto-discovers whether it's running against the Flask dev API (local) or static files on Pages, and falls back gracefully between the two. Typical CI run: ~90 seconds.
 
 ## Layout
 

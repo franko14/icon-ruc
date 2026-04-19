@@ -1,0 +1,14 @@
+[build-system]
+requires = ["maturin>=1.5,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "extract-rs"
+version = "0.1.0"
+description = "Fast GRIB single-point extraction for icon-ruc"
+requires-python = ">=3.10"
+classifiers = ["Programming Language :: Rust", "Programming Language :: Python :: Implementation :: CPython"]
+
+[tool.maturin]
+bindings = "pyo3"
+module-name = "extract_rs"
