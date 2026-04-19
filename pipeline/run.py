@@ -63,8 +63,35 @@ async def process_run(run_id: str, offline: bool = False) -> Path | None:
     with open(out_path, "w") as f:
         json.dump(output, f, separators=(",", ":"))
     print(f"  ✓ wrote {out_path}")
+    _prune_old_runs(config.FORECAST_RETAIN)
     _write_index()
     return out_path
+
+
+def _prune_old_runs(keep: int) -> None:
+    """Keep only the newest `keep` forecast JSONs; delete older JSONs + their GRIBs."""
+    if keep <= 0:
+        return
+    all_jsons = sorted(
+        (p for p in config.FORECAST_DIR.glob("*.json") if p.stem != "index"),
+        key=lambda p: p.stem,
+        reverse=True,
+    )
+    stale = all_jsons[keep:]
+    if not stale:
+        return
+    for jp in stale:
+        run_id = jp.stem
+        for grib in config.RAW_DIR.glob(f"icon_d2_ruc_eps_*_{run_id}_*"):
+            try:
+                grib.unlink()
+            except OSError as e:
+                print(f"  ⚠ failed to remove {grib.name}: {e}")
+        try:
+            jp.unlink()
+            print(f"  ✂ pruned old run {run_id}")
+        except OSError as e:
+            print(f"  ⚠ failed to remove {jp.name}: {e}")
 
 
 def _write_index() -> None:

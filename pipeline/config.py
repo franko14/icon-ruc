@@ -36,6 +36,10 @@ VARIABLES = {
 
 PERCENTILES = [10, 25, 50, 75, 90]
 
+# Retain only the newest N forecast JSONs in data/forecasts/. Older files
+# (and their GRIB inputs in data/raw/) are pruned after each run.
+FORECAST_RETAIN = 6
+
 DWD_BASE = "https://opendata.dwd.de/weather/nwp/v1/m/icon-d2-ruc-eps/p"
 GRID_URL = "https://opendata.dwd.de/weather/lib/cdo/icon_grid_0047_R19B07_L.nc.bz2"
 GRID_FILE = GRID_DIR / "icon_grid_0047_R19B07_L.nc"
