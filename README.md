@@ -66,7 +66,7 @@ Open `http://127.0.0.1:5000/` in a browser. The dashboard reads from `data/forec
 
 The dashboard is fully static once the JSONs exist, so the whole stack is free:
 - **GitHub Actions** runs `main.py` every hour at `:45 UTC` (DWD publishes complete RUC-EPS runs ~30–40 min after each init hour)
-- **GitHub Pages** serves `dashboard.html` + `data/forecasts/*.json` directly from the repo
+- **GitHub Pages** serves `index.html` + `data/forecasts/*.json` directly from the repo
 
 **One-time setup**
 
@@ -98,7 +98,7 @@ pipeline/
 main.py         CLI
 api.py          Flask API + dashboard server
 cleanup.py      standalone GRIB cleanup
-dashboard.html  uPlot single-page dashboard
+index.html  uPlot single-page dashboard
 tests/          pytest suite
 data/
   raw/          GRIB downloads (preserved between runs)

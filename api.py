@@ -35,7 +35,7 @@ def _list_runs() -> list[str]:
 
 @app.route("/")
 def root():
-    return send_from_directory(BASE_DIR, "dashboard.html")
+    return send_from_directory(BASE_DIR, "index.html")
 
 
 @app.route("/data/forecasts/<path:name>")

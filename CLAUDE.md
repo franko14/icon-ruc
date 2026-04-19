@@ -30,7 +30,7 @@ extract_rs/     Rust extension (pyo3 + eccodes + rayon) — parallel GRIB decode
 main.py         CLI entry point
 api.py          Flask API + static dashboard server
 cleanup.py      standalone GRIB cleanup by age
-dashboard.html  vanilla HTML + uPlot dashboard
+index.html  vanilla HTML + uPlot dashboard
 tests/          pytest suite
 data/
   raw/          GRIB downloads (preserved across runs)
