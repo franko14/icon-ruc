@@ -286,8 +286,10 @@ a:hover{text-decoration:underline}
   .seg button{padding:5px 8px;font-size:10.5px}
 
   .chart-wrap{padding:10px 8px 6px;border-radius:6px}
-  /* Chart renders at a desktop-friendly width; user swipes horizontally */
-  .chart{height:280px;min-width:680px}
+  /* Chart renders at a desktop-friendly width; user swipes horizontally.
+     Do NOT override height here — uPlot canvas is 340px and a shorter CSS
+     height would clip the bottom x-axis. */
+  .chart{min-width:680px}
   .chart-scroll{
     margin:-10px -8px 0;padding:10px 8px 0;
     /* Fade on right edge hints more content off-screen */
