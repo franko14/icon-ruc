@@ -9,305 +9,417 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uplot@1.6.31/dist/uPlot.min.css">
 <style>
-/* ── iMeteo.sk-matched visual identity ──────────────────
-   Palette sourced from imeteo.sk/css/global.min.css:
-   primary blue #206ff2, sun yellow #FFD92A, navy #19222a/#2b4672.
+/* ── Unified design tokens ──────────────────────────────
+   Palette sourced from imeteo.sk (primary blue #206ff2,
+   navy #19222a/#2b4672, sun yellow #ffd92a).
+   Strict 5-step type scale and 4px spacing rhythm —
+   every visual element composes from these tokens only.
 */
 :root{
-  --bg:#ffffff;
-  --bg-alt:#f6f7f9;
-  --panel:#ffffff;
-  --panel-2:#f1f3f7;
-  --line:#e1e5ec;
-  --line-2:#c9d0db;
+  /* Surfaces */
+  --bg:       #f5f7fa;
+  --panel:    #ffffff;
+  --panel-2:  #f1f3f7;
 
-  --ink:#19222a;
-  --ink-2:#2b4672;
-  --text:#19222a;
-  --text-dim:#545454;
-  --muted:#686868;
-  --muted-2:#8a94a2;
+  /* Borders (subtle → strong) */
+  --line:     #e1e5ec;
+  --line-2:   #c9d0db;
 
-  /* iMeteo primary brand blue (used for precipitation — natural weather association) */
-  --precip:#206ff2;
-  --precip-2:rgba(32,111,242,0.55);
-  --precip-3:rgba(32,111,242,0.32);
-  --precip-4:rgba(32,111,242,0.14);
-  --precip-rgb:32,111,242;
+  /* Ink ladder — 4 steps, each with clear use */
+  --ink:      #19222a;   /* titles, hero numbers, primary text */
+  --text:     #2b3440;   /* body copy */
+  --muted:    #5e6875;   /* labels, metadata, descriptions */
+  --muted-2:  #9aa1ad;   /* tertiary (ticks, separators) */
 
-  /* iMeteo deep navy (used for wind) */
-  --wind:#2b4672;
-  --wind-2:rgba(43,70,114,0.55);
-  --wind-3:rgba(43,70,114,0.32);
-  --wind-4:rgba(43,70,114,0.14);
-  --wind-rgb:43,70,114;
+  /* Brand accents — one base + rgb triplet per variable */
+  --precip:#206ff2;   --precip-rgb:32,111,242;
+  --wind:  #2b4672;   --wind-rgb:43,70,114;
+  --temp:  #e5594a;   --temp-rgb:229,89,74;
+  --sun:   #ffd92a;   --sun-ink:#6b5400;
 
-  /* Warm coral red for temperature (2 m air) */
-  --temp:#e5594a;
-  --temp-2:rgba(229,89,74,0.55);
-  --temp-3:rgba(229,89,74,0.32);
-  --temp-4:rgba(229,89,74,0.14);
-  --temp-rgb:229,89,74;
+  --bad:#dc3741;  --good:#8dd542;
 
-  /* iMeteo sun-yellow logo accent — reserved for thresholds/alerts */
-  --sun:#ffd92a;
-  --sun-2:rgba(255,217,42,0.9);
-  --sun-ink:#6b5400;
+  /* Typography — 5 sizes, used EVERYWHERE. No ad-hoc values. */
+  --font:       "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --fs-xs:      11px;   /* eyebrow, axis ticks, tick labels, micro */
+  --fs-sm:      13px;   /* description, metadata, secondary labels */
+  --fs-base:    14px;   /* body, readouts, controls, axis numbers */
+  --fs-md:      16px;   /* section titles (meteogram, block, evolution) */
+  --fs-lg:      22px;   /* page/brand title */
 
-  --bad:#dc3741;
-  --good:#8dd542;
+  /* Spacing — 4px rhythm; applied uniformly */
+  --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px;
+  --s-5:20px; --s-6:24px; --s-8:32px; --s-10:40px;
 
-  --font:"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --radius:8px;
-  --radius-sm:4px;
-  --shadow:0 1px 2px rgba(25,34,42,0.05), 0 2px 8px rgba(25,34,42,0.04);
-  --shadow-hover:0 2px 4px rgba(25,34,42,0.08), 0 8px 24px rgba(25,34,42,0.08);
+  /* Shape */
+  --radius:   10px;
+  --radius-sm: 6px;
+  --radius-xs: 3px;
+
+  /* Elevation */
+  --shadow:   0 1px 2px rgba(25,34,42,0.04), 0 2px 12px rgba(25,34,42,0.05);
+
+  /* Derived translucents for bands/legend swatches */
+  --precip-band-outer:rgba(32,111,242,0.12);
+  --precip-band-inner:rgba(32,111,242,0.30);
+  --wind-band-outer:  rgba(43,70,114,0.12);
+  --wind-band-inner:  rgba(43,70,114,0.30);
+  --temp-band-outer:  rgba(229,89,74,0.12);
+  --temp-band-inner:  rgba(229,89,74,0.30);
 }
 *{box-sizing:border-box}
 html,body{
-  margin:0;padding:0;background:var(--bg-alt);color:var(--text);
-  font-family:var(--font);font-size:14px;line-height:1.55;
+  margin:0;padding:0;background:var(--bg);color:var(--text);
+  font-family:var(--font);font-size:var(--fs-base);line-height:1.55;
   font-feature-settings:"tnum" 1, "cv02" 1, "cv11" 1;
   -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
 }
 a{color:var(--precip);text-decoration:none}
 a:hover{text-decoration:underline}
 
-.page{max-width:1200px;margin:0 auto;padding:32px 28px 56px}
+.page{max-width:1200px;margin:0 auto;padding:var(--s-8) var(--s-6) var(--s-10)}
+
+/* ── Reusable building blocks ──────────────────────────── */
+/* One card rule for every boxed surface. */
+.card{
+  background:var(--panel);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+}
+/* One header rule for section titles (detail + evolution + meteogram). */
+.title{
+  font-size:var(--fs-md);
+  font-weight:700;
+  letter-spacing:-0.01em;
+  color:var(--ink);
+  margin:0;
+}
+.title .unit{
+  font-size:var(--fs-sm);
+  font-weight:500;
+  color:var(--muted);
+  margin-left:var(--s-2);
+  letter-spacing:0;
+}
+.title-desc{
+  font-size:var(--fs-sm);
+  color:var(--muted);
+  margin-top:2px;
+}
+/* One UI-label rule (eyebrow, run-picker, ctrl-label). */
+.ui-label{
+  font-size:var(--fs-xs);
+  font-weight:600;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
 
 /* ── Header ─────────────────────────────────────────────── */
 .header{
-  display:flex;align-items:flex-end;justify-content:space-between;gap:24px;
-  padding:22px 26px;margin-bottom:28px;flex-wrap:wrap;
-  background:var(--ink);color:#fff;border-radius:var(--radius);
+  display:flex;align-items:flex-end;justify-content:space-between;
+  gap:var(--s-5);flex-wrap:wrap;
+  padding:var(--s-5) var(--s-6);
+  margin-bottom:var(--s-6);
+  background:var(--ink);color:#fff;
+  border-radius:var(--radius);
   box-shadow:var(--shadow);
 }
-.brand{display:flex;flex-direction:column;gap:4px;color:#fff}
-.brand-row{display:flex;align-items:center;gap:10px}
+.brand{display:flex;flex-direction:column;gap:var(--s-1);color:#fff}
+.brand-row{display:flex;align-items:center;gap:var(--s-2)}
 .brand-dot{
-  display:inline-block;width:14px;height:14px;border-radius:50%;
+  display:inline-block;width:12px;height:12px;border-radius:50%;
   background:var(--sun);
-  box-shadow:0 0 14px rgba(255,217,42,0.4);
+  box-shadow:0 0 12px rgba(255,217,42,0.4);
 }
 .brand-eyebrow{
-  font-size:10.5px;letter-spacing:0.18em;
-  color:rgba(255,255,255,0.55);text-transform:uppercase;font-weight:600;
+  font-size:var(--fs-xs);
+  font-weight:600;letter-spacing:0.16em;text-transform:uppercase;
+  color:rgba(255,255,255,0.65);
 }
 .brand-title{
-  font-size:22px;line-height:1.1;font-weight:700;letter-spacing:-0.01em;
+  font-size:var(--fs-lg);line-height:1.1;font-weight:700;letter-spacing:-0.015em;
 }
-.brand-title .loc{color:rgba(255,255,255,0.6);font-weight:400;margin-left:10px;font-size:14px}
+.brand-title .loc{
+  color:rgba(255,255,255,0.65);
+  font-weight:400;margin-left:var(--s-3);font-size:var(--fs-base);
+  letter-spacing:0;
+}
 .brand-sub{
-  font-size:12px;color:rgba(255,255,255,0.55);
-  margin-top:2px;letter-spacing:0.01em;
+  font-size:var(--fs-sm);color:rgba(255,255,255,0.55);
 }
 
-.header-meta{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
-.run-picker{display:flex;align-items:center;gap:10px}
+.header-meta{display:flex;flex-direction:column;align-items:flex-end;gap:var(--s-2)}
+.run-picker{display:flex;align-items:center;gap:var(--s-2)}
 .run-picker label{
-  font-size:10px;letter-spacing:0.14em;
-  color:rgba(255,255,255,0.55);text-transform:uppercase;font-weight:600;
+  font-size:var(--fs-xs);font-weight:600;
+  letter-spacing:0.14em;text-transform:uppercase;
+  color:rgba(255,255,255,0.6);
 }
 .run-picker select{
   background:rgba(255,255,255,0.08);color:#fff;
-  border:1px solid rgba(255,255,255,0.15);border-radius:var(--radius-sm);
-  padding:7px 32px 7px 12px;font-family:var(--font);font-size:13px;font-weight:500;
+  border:1px solid rgba(255,255,255,0.18);border-radius:var(--radius-sm);
+  padding:7px 32px 7px 12px;
+  font-family:var(--font);font-size:var(--fs-sm);font-weight:500;
   cursor:pointer;appearance:none;-webkit-appearance:none;
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%23ffffff' stroke-width='1.75'><path d='M2 2l4 4 4-4'/></svg>");
   background-repeat:no-repeat;background-position:right 10px center;background-size:9px;
+  transition:background 120ms ease, border-color 120ms ease;
 }
-.run-picker select:hover{background:rgba(255,255,255,0.14);border-color:rgba(255,255,255,0.25)}
-.age{font-size:11px;color:rgba(255,255,255,0.55)}
+.run-picker select:hover{background:rgba(255,255,255,0.14);border-color:rgba(255,255,255,0.3)}
+.age{font-size:var(--fs-xs);color:rgba(255,255,255,0.55);letter-spacing:0.02em}
 
-/* ── Chart block ────────────────────────────────────────── */
-.block{margin-bottom:32px}
+/* ── Chart block (detail + evolution share this structure) ── */
+.block{margin-bottom:var(--s-6)}
 .block-head{
   display:flex;align-items:flex-start;justify-content:space-between;
-  gap:24px;margin-bottom:14px;flex-wrap:wrap;
+  gap:var(--s-4);margin-bottom:var(--s-3);flex-wrap:wrap;
 }
-.block-title{display:flex;align-items:center;gap:10px}
+.block-title{display:flex;align-items:center;gap:var(--s-2)}
 .block-title h2{
-  margin:0;font-size:15px;font-weight:700;letter-spacing:0.02em;
-  color:var(--ink);
+  margin:0;font-size:var(--fs-md);font-weight:700;letter-spacing:-0.01em;color:var(--ink);
+}
+.block-title h2 .unit{
+  font-size:var(--fs-sm);font-weight:500;color:var(--muted);margin-left:var(--s-2);
 }
 .block-title .accent-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
 .block-title[data-var="TOT_PREC"] .accent-dot{background:var(--precip)}
 .block-title[data-var="VMAX_10M"] .accent-dot{background:var(--wind)}
-.block-title[data-var="T_2M"] .accent-dot{background:var(--temp)}
-.block-desc{
-  font-size:12px;color:var(--muted);
-  margin-top:3px;
-}
+.block-title[data-var="T_2M"]     .accent-dot{background:var(--temp)}
+.block-desc{font-size:var(--fs-sm);color:var(--muted);margin-top:2px}
 
-.controls{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
-.ctrl{display:flex;align-items:center;gap:8px}
+/* Controls (segmented buttons) */
+.controls{display:flex;gap:var(--s-3);flex-wrap:wrap;align-items:center}
+.ctrl{display:flex;align-items:center;gap:var(--s-2)}
 .ctrl-label{
-  font-size:10px;letter-spacing:0.14em;font-weight:700;
+  font-size:var(--fs-xs);font-weight:700;letter-spacing:0.14em;
   text-transform:uppercase;color:var(--muted);
 }
 .seg{
   display:flex;background:var(--panel-2);border:1px solid var(--line);
-  border-radius:var(--radius-sm);overflow:hidden;padding:2px;gap:2px;
+  border-radius:var(--radius-sm);padding:2px;gap:2px;
 }
 .seg button{
-  font-family:var(--font);font-size:11px;font-weight:600;
+  font-family:var(--font);font-size:var(--fs-xs);font-weight:600;
   background:transparent;color:var(--muted);border:0;
-  padding:5px 10px;cursor:pointer;border-radius:3px;
+  padding:5px 10px;cursor:pointer;border-radius:var(--radius-xs);
   transition:all 120ms ease;letter-spacing:0.02em;
 }
 .seg button:hover{color:var(--ink);background:rgba(25,34,42,0.04)}
 .seg button.active{background:var(--ink);color:#fff}
 .seg[data-accent="precip"] button.active{background:var(--precip);color:#fff}
-.seg[data-accent="wind"] button.active{background:var(--wind);color:#fff}
-.seg[data-accent="temp"] button.active{background:var(--temp);color:#fff}
+.seg[data-accent="wind"]   button.active{background:var(--wind);  color:#fff}
+.seg[data-accent="temp"]   button.active{background:var(--temp);  color:#fff}
 
+/* Chart container — same for detail + evolution */
 .chart-wrap{
   background:var(--panel);border-radius:var(--radius);box-shadow:var(--shadow);
-  padding:16px;position:relative;overflow:hidden;
+  padding:var(--s-4);position:relative;overflow:hidden;
 }
 .chart-scroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
 .chart-scroll::-webkit-scrollbar{height:6px}
 .chart-scroll::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:3px}
 .chart-scroll::-webkit-scrollbar-track{background:transparent}
-.chart{height:340px}
-.readout{
-  display:flex;gap:22px;flex-wrap:wrap;padding:13px 16px 12px;
-  border-top:1px solid var(--line);margin:14px -16px -16px;
-  font-size:13px;color:var(--text-dim);
-  min-height:44px;background:var(--bg-alt);
-  border-radius:0 0 var(--radius) var(--radius);
-}
-.readout .time{color:var(--muted);margin-right:4px;font-weight:600}
-.readout .key{color:var(--muted);margin-right:4px}
-.readout .val{color:var(--ink);font-weight:600}
-.readout .sep{color:var(--line-2);margin:0 4px}
+/* Always render full forecast at readable density; scroll when viewport is narrower. */
+.chart{height:340px;min-width:720px}
 
-.legend{
-  display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;padding:0 4px;
-  font-size:12.5px;color:var(--muted);
+/* Hover readout row under each chart */
+.readout{
+  display:flex;gap:var(--s-5);flex-wrap:wrap;
+  padding:var(--s-3) var(--s-4);
+  margin:var(--s-3) calc(-1 * var(--s-4)) calc(-1 * var(--s-4));
+  border-top:1px solid var(--line);
+  background:var(--bg);
+  border-radius:0 0 var(--radius) var(--radius);
+  font-size:var(--fs-sm);color:var(--text);
+  min-height:44px;
 }
-.legend .sw{display:inline-block;width:22px;height:8px;margin-right:6px;vertical-align:middle;border-radius:2px}
-.legend[data-var="TOT_PREC"] .sw.outer{background:var(--precip-4)}
-.legend[data-var="TOT_PREC"] .sw.inner{background:var(--precip-3)}
+.readout .time{color:var(--muted);font-weight:600;margin-right:var(--s-1)}
+.readout .key{color:var(--muted);margin-right:var(--s-1)}
+.readout .val{color:var(--ink);font-weight:600}
+.readout .sep{color:var(--muted-2);margin:0 var(--s-1)}
+
+/* Legend under detail charts */
+.legend{
+  display:flex;gap:var(--s-5);flex-wrap:wrap;margin-top:var(--s-3);padding:0 var(--s-1);
+  font-size:var(--fs-xs);color:var(--muted);letter-spacing:0.02em;
+}
+.legend .sw{
+  display:inline-block;width:22px;height:8px;margin-right:var(--s-1);
+  vertical-align:middle;border-radius:2px;
+}
+.legend[data-var="TOT_PREC"] .sw.outer{background:var(--precip-band-outer)}
+.legend[data-var="TOT_PREC"] .sw.inner{background:var(--precip-band-inner)}
 .legend[data-var="TOT_PREC"] .sw.median{background:var(--precip)}
-.legend[data-var="VMAX_10M"] .sw.outer{background:var(--wind-4)}
-.legend[data-var="VMAX_10M"] .sw.inner{background:var(--wind-3)}
+.legend[data-var="VMAX_10M"] .sw.outer{background:var(--wind-band-outer)}
+.legend[data-var="VMAX_10M"] .sw.inner{background:var(--wind-band-inner)}
 .legend[data-var="VMAX_10M"] .sw.median{background:var(--wind)}
-.legend[data-var="T_2M"] .sw.outer{background:var(--temp-4)}
-.legend[data-var="T_2M"] .sw.inner{background:var(--temp-3)}
-.legend[data-var="T_2M"] .sw.median{background:var(--temp)}
+.legend[data-var="T_2M"]     .sw.outer{background:var(--temp-band-outer)}
+.legend[data-var="T_2M"]     .sw.inner{background:var(--temp-band-inner)}
+.legend[data-var="T_2M"]     .sw.median{background:var(--temp)}
 .legend .sw.threshold{background:var(--sun);height:2px;margin-bottom:3px;box-shadow:0 0 6px rgba(255,217,42,0.5)}
+
+/* ── Meteogram ─────────────────────────────────────────── */
+.meteogram{
+  background:var(--panel);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:var(--s-4) var(--s-4) var(--s-2);
+  margin-bottom:var(--s-6);overflow:hidden;
+}
+.mg-head{
+  display:flex;align-items:baseline;justify-content:space-between;
+  gap:var(--s-4);margin-bottom:var(--s-3);flex-wrap:wrap;
+}
+.mg-head h2{
+  margin:0;font-size:var(--fs-md);font-weight:700;letter-spacing:-0.01em;color:var(--ink);
+}
+.mg-head .desc{font-size:var(--fs-sm);color:var(--muted)}
+.mg-scroll{
+  overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;
+  margin:0 calc(-1 * var(--s-2));padding:0 var(--s-2);
+}
+.mg-scroll::-webkit-scrollbar{height:6px}
+.mg-scroll::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:3px}
+.mg-scroll::-webkit-scrollbar-track{background:transparent}
+.mg-stack{min-width:720px}
+.mg-panel{padding:var(--s-1) 0 var(--s-1)}
+.mg-panel + .mg-panel{border-top:1px solid var(--line)}
+.mg-panel .mg-label{
+  display:flex;align-items:baseline;gap:var(--s-2);
+  padding:var(--s-1) 0 var(--s-1) 2px;
+  font-size:var(--fs-xs);font-weight:700;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--muted);
+}
+.mg-panel .mg-label .unit{
+  color:var(--muted-2);font-weight:500;letter-spacing:0.02em;text-transform:none;
+  font-size:var(--fs-xs);
+}
+.mg-panel .mg-chart{width:100%}
+/* Shared readout styling with detail charts — tinted background + inset from card edges. */
+.mg-readout{
+  display:flex;gap:var(--s-4);flex-wrap:wrap;
+  padding:var(--s-3) var(--s-4);
+  margin:var(--s-3) calc(-1 * var(--s-4)) calc(-1 * var(--s-2));
+  border-top:1px solid var(--line);
+  background:var(--bg);
+  border-radius:0 0 var(--radius) var(--radius);
+  font-size:var(--fs-sm);color:var(--text);
+  min-height:44px;
+}
+.mg-readout .time{color:var(--muted);font-weight:600;margin-right:var(--s-1)}
+.mg-readout .chip-val{color:var(--ink);font-weight:600}
+.mg-readout .sep{color:var(--muted-2);margin:0 var(--s-1)}
 
 /* ── Evolution section ──────────────────────────────────── */
 .evolution-head{
-  display:flex;align-items:flex-end;justify-content:space-between;gap:24px;
-  padding-top:24px;margin-bottom:18px;border-top:1px solid var(--line);
-  flex-wrap:wrap;
+  display:flex;align-items:flex-end;justify-content:space-between;
+  gap:var(--s-4);padding-top:var(--s-5);margin-bottom:var(--s-4);
+  border-top:1px solid var(--line);flex-wrap:wrap;
 }
 .evolution-head .title{
-  font-size:15px;font-weight:700;letter-spacing:0.02em;color:var(--ink);
+  font-size:var(--fs-md);font-weight:700;letter-spacing:-0.01em;color:var(--ink);
 }
-.evolution-head .desc{font-size:12px;color:var(--muted);margin-top:3px}
+.evolution-head .desc{font-size:var(--fs-sm);color:var(--muted);margin-top:2px}
 
-.run-chips{
-  display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;
-}
+.run-chips{display:flex;gap:var(--s-1);flex-wrap:wrap;margin-bottom:var(--s-4)}
 .chip{
-  display:inline-flex;align-items:center;gap:8px;
-  font-family:var(--font);font-size:11.5px;font-weight:600;
-  padding:6px 11px 6px 10px;
+  display:inline-flex;align-items:center;gap:var(--s-2);
+  font-family:var(--font);font-size:var(--fs-xs);font-weight:600;
+  padding:5px 10px;
   background:var(--panel);border:1px solid var(--line);
   color:var(--muted);border-radius:999px;cursor:pointer;
   transition:all 120ms ease;
 }
 .chip:hover{color:var(--ink);border-color:var(--line-2)}
-.chip .chip-dot{width:9px;height:9px;border-radius:50%;background:var(--line-2);display:inline-block;flex:none}
-.chip.active{color:var(--ink);background:var(--panel)}
-.chip.active[data-accent="precip"]{border-color:var(--precip);background:rgba(32,111,242,0.06)}
-.chip.active[data-accent="wind"]{border-color:var(--wind);background:rgba(43,70,114,0.06)}
-.chip.active[data-accent="temp"]{border-color:var(--temp);background:rgba(229,89,74,0.06)}
-.chip-actions{display:flex;gap:6px;margin-left:auto}
+.chip .chip-dot{width:8px;height:8px;border-radius:50%;background:var(--line-2);display:inline-block;flex:none}
+.chip.active{color:var(--ink)}
+.chip.active[data-accent="precip"]{border-color:var(--precip);background:rgba(32,111,242,0.05)}
+.chip.active[data-accent="wind"]  {border-color:var(--wind);  background:rgba(43,70,114,0.05)}
+.chip.active[data-accent="temp"]  {border-color:var(--temp);  background:rgba(229,89,74,0.05)}
+.chip-actions{display:flex;gap:var(--s-1);margin-left:auto}
 .chip-action{
-  font-family:var(--font);font-size:10.5px;font-weight:600;
+  font-family:var(--font);font-size:var(--fs-xs);font-weight:600;
   padding:5px 10px;color:var(--muted);background:var(--panel);
   border:1px solid var(--line);border-radius:var(--radius-sm);cursor:pointer;
   letter-spacing:0.06em;text-transform:uppercase;
+  transition:all 120ms ease;
 }
 .chip-action:hover{color:var(--ink);border-color:var(--line-2)}
 
 /* ── Footer ─────────────────────────────────────────────── */
 .footer{
-  margin-top:40px;padding-top:18px;border-top:1px solid var(--line);
-  display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
-  font-size:11px;color:var(--muted-2);
+  margin-top:var(--s-8);padding-top:var(--s-4);border-top:1px solid var(--line);
+  display:flex;justify-content:space-between;gap:var(--s-4);flex-wrap:wrap;
+  font-size:var(--fs-xs);color:var(--muted);letter-spacing:0.02em;
 }
 .footer a{color:var(--precip);font-weight:500}
-.footer .dot{color:var(--line-2);margin:0 8px}
 
 /* ── States ─────────────────────────────────────────────── */
 .err{
   background:rgba(220,55,65,0.06);border:1px solid rgba(220,55,65,0.35);
-  color:var(--bad);padding:14px 18px;border-radius:var(--radius);
-  font-size:13px;margin-bottom:24px;
+  color:var(--bad);padding:var(--s-3) var(--s-4);border-radius:var(--radius-sm);
+  font-size:var(--fs-sm);margin-bottom:var(--s-4);
 }
 .empty{
-  color:var(--muted);font-size:12px;
-  padding:60px 0;text-align:center;
+  color:var(--muted);font-size:var(--fs-sm);
+  padding:var(--s-10) 0;text-align:center;letter-spacing:0.02em;
 }
 .loading{
-  color:var(--muted);font-size:11px;padding:30px 0;text-align:center;
-  letter-spacing:0.06em;text-transform:uppercase;font-weight:600;
+  color:var(--muted);font-size:var(--fs-xs);padding:var(--s-6) 0;text-align:center;
+  letter-spacing:0.12em;text-transform:uppercase;font-weight:600;
 }
 
 /* ── uPlot overrides ────────────────────────────────────── */
 .uplot{background:transparent;color:var(--ink)}
-.u-axis text{fill:#2b3440!important}
-.u-axis .u-label{font-size:14px;letter-spacing:0.02em;font-weight:700}
+.u-axis text{fill:var(--text)!important}
+.u-axis .u-label{font-size:var(--fs-base);letter-spacing:0.02em;font-weight:700}
 .u-select{background:rgba(32,111,242,0.08)!important}
 .u-cursor-x,.u-cursor-y{background:var(--line-2)!important}
 
+/* Subtle entrance animation for cards */
+@keyframes fadeInUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.header, .meteogram, .block, .evolution-head{animation:fadeInUp 280ms ease both}
+.block:nth-of-type(1){animation-delay:40ms}
+.block:nth-of-type(2){animation-delay:80ms}
+.block:nth-of-type(3){animation-delay:120ms}
+
+/* ── Mobile (≤720px) ───────────────────────────────────── */
 @media (max-width:720px){
-  .page{padding:16px 10px 36px}
-  .header{padding:16px;flex-direction:column;align-items:flex-start;gap:12px;margin-bottom:20px}
+  .page{padding:var(--s-4) var(--s-3) var(--s-8)}
+  .header{
+    padding:var(--s-4);flex-direction:column;align-items:flex-start;
+    gap:var(--s-3);margin-bottom:var(--s-5);
+  }
   .header-meta{align-items:flex-start;width:100%}
   .run-picker{width:100%}
   .run-picker select{flex:1}
-  .brand-title{font-size:19px}
-  .brand-title .loc{display:block;margin-left:0;margin-top:2px;font-size:12px}
+  .brand-title .loc{display:block;margin-left:0;margin-top:2px;font-size:var(--fs-sm)}
 
-  .block{margin-bottom:28px}
-  .block-head{gap:10px;margin-bottom:10px}
-  .block-title h2{font-size:14px}
-  .block-desc{font-size:11.5px}
+  .block{margin-bottom:var(--s-5)}
+  .block-head{gap:var(--s-2);margin-bottom:var(--s-2)}
 
-  .controls{gap:8px;width:100%}
-  .ctrl{gap:5px;flex-wrap:wrap}
-  .ctrl-label{font-size:9.5px}
-  .seg button{padding:5px 8px;font-size:10.5px}
+  .controls{gap:var(--s-2);width:100%}
+  .ctrl{gap:var(--s-1);flex-wrap:wrap}
 
-  .chart-wrap{padding:10px 8px 6px;border-radius:6px}
-  /* Chart renders at a desktop-friendly width; user swipes horizontally.
-     Do NOT override height here — uPlot canvas is 340px and a shorter CSS
-     height would clip the bottom x-axis. */
-  .chart{min-width:680px}
+  .chart-wrap{padding:var(--s-3) var(--s-2);border-radius:var(--radius-sm)}
   .chart-scroll{
-    margin:-10px -8px 0;padding:10px 8px 0;
-    /* Fade on right edge hints more content off-screen */
+    margin:calc(-1 * var(--s-3)) calc(-1 * var(--s-2)) 0;
+    padding:var(--s-3) var(--s-2) 0;
     mask-image:linear-gradient(to right, black 0, black calc(100% - 20px), transparent 100%);
     -webkit-mask-image:linear-gradient(to right, black 0, black calc(100% - 20px), transparent 100%);
   }
-  .readout{padding:10px 10px;font-size:11.5px;gap:12px;margin:10px -8px -6px}
-  .readout .sep{margin:0 2px}
+  .readout{
+    padding:var(--s-2) var(--s-3);
+    margin:var(--s-2) calc(-1 * var(--s-2)) calc(-1 * var(--s-2));
+    gap:var(--s-3);
+  }
 
-  .legend{font-size:10.5px;gap:12px}
-  .legend .sw{width:16px;height:7px;margin-right:4px}
+  .legend{gap:var(--s-3)}
+  .legend .sw{width:16px;height:7px}
 
-  .evolution-head{gap:10px;padding-top:18px;margin-bottom:12px}
-  .evolution-head .title{font-size:14px}
-  .chip{font-size:10.5px;padding:5px 9px}
-  .chip-action{font-size:9.5px;padding:4px 8px}
+  .meteogram{padding:var(--s-3) var(--s-3) var(--s-1)}
+  .evolution-head{gap:var(--s-2);padding-top:var(--s-4);margin-bottom:var(--s-3)}
 
-  .footer{margin-top:24px;font-size:10px;gap:8px}
+  .footer{margin-top:var(--s-5)}
 }
 </style>
 </head>
@@ -332,6 +444,7 @@ a:hover{text-decoration:underline}
   </header>
 
   <div id="err" class="err" style="display:none"></div>
+  <div id="meteogram"></div>
   <div id="charts"></div>
   <div id="evolution"></div>
 
@@ -386,12 +499,6 @@ const VAR_META = {
   },
 };
 
-const TIME_RANGES = [
-  {key:'6h', label:'6H', hours:6},
-  {key:'12h', label:'12H', hours:12},
-  {key:'24h', label:'24H', hours:24},
-  {key:'all', label:'ALL', hours:Infinity},
-];
 const SPREADS = [
   {key:'wide', label:'P10–90'},
   {key:'inner', label:'P25–75'},
@@ -445,11 +552,232 @@ function sliceByRange(times, values, hours){
   return {times:t, values:v};
 }
 
+// ── shared axis helpers (one visual language across all charts) ──
+// 3-hourly vertical grid aligned to 00/03/06/09/12/15/18/21 UTC.
+const threeHourSplits = (u, axisIdx, scaleMin, scaleMax) => {
+  const step = 3 * 3600;
+  const start = Math.ceil(scaleMin / step) * step;
+  const out = [];
+  for (let t = start; t <= scaleMax; t += step) out.push(t);
+  return out;
+};
+// "Apr 19 16:00" on first tick of each visible day, "16:00" after.
+const timeLabels = (u, vals) => {
+  const seenDays = new Set();
+  return vals.map(v => {
+    const d = new Date(v*1000);
+    const day = d.toLocaleDateString([], {month:'short', day:'numeric'});
+    const hm  = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
+    if (!seenDays.has(day)){ seenDays.add(day); return `${day} ${hm}`; }
+    return hm;
+  });
+};
+// Pull palette from CSS custom properties so canvas drawings stay in lock-step
+// with the DOM's color system. Single source of truth: :root tokens.
+const cssVar = (name) =>
+  getComputedStyle(document.documentElement).getPropertyValue(name).trim() || null;
+const GRID_X = 'rgba(25,34,42,0.09)';   // 3-hour anchors — stronger
+const GRID_Y = 'rgba(25,34,42,0.06)';   // minor horizontal divisions
+const AXIS_STROKE = cssVar('--text')   || '#2b3440';
+const TICK_STROKE = cssVar('--line-2') || '#c9d0db';
+
+// ── meteogram (compact multi-panel overview) ──────────
+function renderMeteogram(data){
+  const root = $('meteogram');
+  root.innerHTML = '';
+  const T = data.variables.T_2M;
+  const P = data.variables.TOT_PREC;
+  const W = data.variables.VMAX_10M;
+  if (!T && !P && !W){ return; }
+
+  const section = document.createElement('section');
+  section.className = 'meteogram';
+  section.innerHTML = `
+    <div class="mg-head">
+      <h2>Meteogram · next ${Math.round(mgHours(data))}h</h2>
+      <div class="desc">Ensemble median p50 · hover or tap to read values at any time</div>
+    </div>
+    <div class="mg-scroll">
+      <div class="mg-stack">
+        <div class="mg-panel"><div class="mg-label">Temperature <span class="unit">°C</span></div><div class="mg-chart" id="mg-temp"></div></div>
+        <div class="mg-panel"><div class="mg-label">Precipitation <span class="unit">mm/h</span></div><div class="mg-chart" id="mg-prec"></div></div>
+        <div class="mg-panel"><div class="mg-label">Rain probability <span class="unit">P(≥0.1 mm/h)</span></div><div class="mg-chart" id="mg-prob"></div></div>
+        <div class="mg-panel"><div class="mg-label">Wind gust <span class="unit">m/s</span></div><div class="mg-chart" id="mg-wind"></div></div>
+      </div>
+    </div>
+    <div class="mg-readout" id="mg-readout"></div>
+  `;
+  root.appendChild(section);
+
+  const syncKey = 'meteogram-' + data.run_id;
+  const readout = section.querySelector('#mg-readout');
+  const stash = {};    // keep last cursor values per panel for readout
+
+  const times = parseTimes((P && P.times.length ? P : (T || W)).times);
+  const xMin = times[0] / 1000;
+  const xMax = times[times.length-1] / 1000;
+
+  function commonAxes(showX, yOpts = {}){
+    return [
+      {
+        show: true,
+        stroke: showX ? AXIS_STROKE : 'transparent',
+        grid:{show:true, stroke:GRID_X, width:1},
+        ticks:{show:showX, stroke:TICK_STROKE, width:1, size:5},
+        font:'500 12px Inter, sans-serif',
+        size: showX ? 36 : 0,
+        space: 85,
+        splits: threeHourSplits,
+        values: showX ? timeLabels : (u, vals) => vals.map(() => ''),
+      },
+      {
+        stroke:AXIS_STROKE,
+        grid:{show:true, stroke:GRID_Y, width:1},
+        ticks:{stroke:TICK_STROKE, width:1, size:3},
+        font:'500 11px Inter, sans-serif',
+        size:46,
+        space: yOpts.space ?? 20,
+        ...(yOpts.splits ? {splits: yOpts.splits} : {}),
+        ...(yOpts.values ? {values: yOpts.values} : {}),
+      },
+    ];
+  }
+
+  function setReadout(){
+    const parts = [];
+    if (stash.time != null) parts.push(`<span class="time">${fmtTime(stash.time)}</span>`);
+    if (stash.temp != null) parts.push(`<span class="chip-val">${fmtNum(stash.temp,1)} °C</span>`);
+    if (stash.prec != null) parts.push(`<span class="chip-val">${fmtNum(stash.prec,2)} mm/h</span>`);
+    if (stash.prob != null) parts.push(`<span class="chip-val">${Math.round(stash.prob*100)}% rain</span>`);
+    if (stash.wind != null) parts.push(`<span class="chip-val">${fmtNum(stash.wind,1)} m/s</span>`);
+    readout.innerHTML = parts.length
+      ? parts.join('<span class="sep">·</span>')
+      : '<span class="time">hover or tap any panel</span>';
+  }
+  setReadout();
+
+  function makePanel(elId, varData, color, opts){
+    if (!varData || !varData.times.length){ return null; }
+    const el = $(elId);
+    const ts = parseTimes(varData.times).map(ms => ms/1000);
+    const p50 = varData.percentiles.p50.slice();
+    const p25 = varData.percentiles.p25 ? varData.percentiles.p25.slice() : null;
+    const p75 = varData.percentiles.p75 ? varData.percentiles.p75.slice() : null;
+
+    const showX = !!opts.showX;
+    const height = opts.height;
+    const kind = opts.kind || 'line';  // 'line' | 'bars' | 'area'
+    const fillAlpha = opts.fillAlpha ?? 0.2;
+    const rgb = opts.rgb;
+
+    let series, data, bands = [];
+    if (kind === 'bars'){
+      data = [ts, p50];
+      series = [{}, {
+        stroke: color, width: 1,
+        fill: `rgba(${rgb},0.55)`,
+        points: {show:false},
+        paths: uPlot.paths.bars({size:[0.75, 10]}),
+      }];
+    } else if (kind === 'area'){
+      data = [ts, p50];
+      series = [{}, {
+        stroke: color, width: 1.25,
+        fill: `rgba(${rgb},${fillAlpha})`,
+        points: {show:false},
+      }];
+    } else {
+      data = [ts, p25 ?? p50, p75 ?? p50, p50];
+      series = [
+        {},
+        {stroke:'transparent', points:{show:false}, label:'p25'},
+        {stroke:'transparent', points:{show:false}, label:'p75'},
+        {stroke:color, width:1.7, points:{show:false}, label:'p50'},
+      ];
+      if (p25 && p75) bands.push({series:[2,1], fill:`rgba(${rgb},${fillAlpha})`});
+    }
+
+    const plot = new uPlot({
+      width: el.clientWidth || 900,
+      height,
+      padding: [10, 12, showX ? 2 : 4, 4],
+      scales: {
+        x: {time:true, range: () => [xMin, xMax]},
+        y: opts.yRange ? {auto:false, range: opts.yRange}
+                       : {auto:true, range:(u, a, b) =>
+                            opts.allowNegative ? [a - Math.max(0.5,(b-a)*0.08), b + Math.max(0.5,(b-a)*0.08)]
+                                               : [0, Math.max(b,0.001) * 1.1]},
+      },
+      axes: commonAxes(showX, opts.yAxis || {}),
+      series, bands,
+      legend: {show:false},
+      cursor: {
+        drag:{setScale:false},
+        sync: {key: syncKey, setSeries:false},
+        points:{size:4, stroke:color, fill:'#fff', width:1.2},
+        focus:{prox:18}, x:true, y:false,
+      },
+      hooks: {
+        setCursor: [(u) => {
+          const i = u.cursor.idx;
+          if (i == null){ stash[opts.stashKey] = null; stash.time = null; setReadout(); return; }
+          stash.time = ts[i]*1000;
+          stash[opts.stashKey] = p50[i];
+          setReadout();
+        }],
+      },
+    }, data, el);
+    return plot;
+  }
+
+  makePanel('mg-temp', T, 'rgb(229,89,74)', {
+    height: 110, showX: false, kind:'line', fillAlpha: 0.18,
+    rgb: '229,89,74', stashKey:'temp', allowNegative: true,
+    yAxis: {space: 22},
+  });
+  makePanel('mg-prec', P, 'rgb(32,111,242)', {
+    height: 80, showX: false, kind:'bars',
+    rgb: '32,111,242', stashKey:'prec',
+    yAxis: {space: 22},
+  });
+  // Probability panel — derive P(≥0.1 mm/h) series
+  if (P && P.probability_exceeds && P.probability_exceeds['0.1']){
+    const probVD = {
+      times: P.times,
+      unit: '%',
+      percentiles: { p50: P.probability_exceeds['0.1'] },
+    };
+    makePanel('mg-prob', probVD, 'rgb(32,111,242)', {
+      height: 56, showX: false, kind:'area', fillAlpha: 0.28,
+      rgb: '32,111,242', stashKey:'prob',
+      yRange: () => [0, 1],
+      yAxis: {
+        splits: [0, 0.25, 0.5, 0.75, 1.0],
+        values: (u, vals) => vals.map(v => `${Math.round(v*100)}%`),
+      },
+    });
+  }
+  makePanel('mg-wind', W, 'rgb(43,70,114)', {
+    height: 110, showX: true, kind:'line', fillAlpha: 0.18,
+    rgb: '43,70,114', stashKey:'wind',
+    yAxis: {space: 22},
+  });
+}
+
+function mgHours(data){
+  const all = [];
+  for (const v of Object.values(data.variables || {})){
+    if (v && v.times && v.times.length) all.push(...v.times.map(t => new Date(t).getTime()));
+  }
+  if (!all.length) return 0;
+  return (Math.max(...all) - Math.min(...all)) / 3600000;
+}
+
 // ── per-variable controls ──────────────────────────────
 function ensureControls(varName, vd){
   if (state.controls[varName]) return;
   const thresholds = Object.keys(vd.probability_exceeds || {});
-  state.controls[varName] = { range:'24h', spread:'wide', threshold:thresholds[0] || null };
+  state.controls[varName] = { spread:'wide', threshold:thresholds[0] || null };
 }
 
 function makeSegControl(label, options, accent, activeKey, onChange){
@@ -486,7 +814,7 @@ function renderBlock(parent, varName, data){
       <div>
         <div class="block-title" data-var="${varName}">
           <span class="accent-dot"></span>
-          <h2>${meta.label}</h2>
+          <h2>${meta.label} <span class="unit">${vd ? vd.unit : ''}</span></h2>
         </div>
         <div class="block-desc">${meta.desc}</div>
       </div>
@@ -518,9 +846,6 @@ function renderControls(varName, vd){
   c.innerHTML = '';
   const accent = VAR_META[varName].accent;
   const cur = state.controls[varName];
-  c.appendChild(makeSegControl('Time', TIME_RANGES, accent, cur.range, (k) => {
-    cur.range = k; drawChart(varName, vd);
-  }));
   c.appendChild(makeSegControl('Spread', SPREADS, accent, cur.spread, (k) => {
     cur.spread = k; drawChart(varName, vd);
   }));
@@ -558,14 +883,15 @@ function drawChart(varName, vd){
   el.innerHTML = '';
   const cur = state.controls[varName];
   const meta = VAR_META[varName];
-  const range = TIME_RANGES.find(r => r.key === cur.range);
 
+  // Always render the full forecast horizon — chart scrolls horizontally
+  // via the wrapping .chart-scroll if the viewport is narrower.
   const times = parseTimes(vd.times);
   const sliced = {};
   for (const pct of ['p10','p25','p50','p75','p90']){
-    sliced[pct] = sliceByRange(times, vd.percentiles[pct], range.hours).values;
+    sliced[pct] = vd.percentiles[pct];
   }
-  const t = sliceByRange(times, vd.percentiles.p50, range.hours).times.map(ms => ms/1000);
+  const t = times.map(ms => ms/1000);
 
   const accent = `rgb(${meta.rgb})`;
   const outer4 = `rgba(${meta.rgb},0.14)`;
@@ -587,7 +913,7 @@ function drawChart(varName, vd){
 
   const thresholdVal = cur.threshold ? Number(cur.threshold) : null;
   const probs = vd.probability_exceeds || {};
-  const probSeries = cur.threshold ? sliceByRange(times, probs[cur.threshold] || [], range.hours).values : null;
+  const probSeries = cur.threshold ? (probs[cur.threshold] || null) : null;
 
   const opts = {
     width: el.clientWidth || 900,
@@ -679,30 +1005,36 @@ function drawChart(varName, vd){
   renderReadout(varName, null, vd, probSeries);
 }
 
+function isNarrow(){ return window.innerWidth < 720; }
+
+// Unified axis styling for every chart on the page (meteogram, detail, evolution).
+// Same 3-hourly vertical grid, same finer horizontal grid, same palette + fonts.
 function axisOpts({side=0, withDayLabel=false, unit=null} = {}){
-  const base = {
-    stroke:'#2b3440',
-    grid:{stroke:'rgba(25,34,42,0.06)', width:1},
-    ticks:{stroke:'#c9d0db', width:1, size:7},
-    font:'500 14px Inter, sans-serif',
-    size:54,
-    gap:8,
-  };
+  const narrow = isNarrow();
   if (side === 1){
-    return {...base, size:96, label:unit, labelSize:34,
-            labelFont:'700 15px Inter, sans-serif', labelGap:10};
-  }
-  if (withDayLabel){
-    base.values = (u, vals) => {
-      const seenDays = new Set();
-      return vals.map(v => {
-        const d = new Date(v*1000);
-        const day = d.toLocaleDateString([], {month:'short', day:'numeric'});
-        const hm  = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
-        if (!seenDays.has(day)){ seenDays.add(day); return `${day} ${hm}`; }
-        return hm;
-      });
+    // No rotated unit label — the unit is already shown in the panel/block
+    // title and in the hover readout. Keeps the axis tight.
+    return {
+      stroke: AXIS_STROKE,
+      grid:{show:true, stroke:GRID_Y, width:1},
+      ticks:{stroke:TICK_STROKE, width:1, size:4},
+      font:`500 ${narrow ? 11 : 13}px Inter, sans-serif`,
+      size: narrow ? 34 : 42,
+      space: 20,
     };
+  }
+  const base = {
+    stroke: AXIS_STROKE,
+    grid:{show:true, stroke:GRID_X, width:1},
+    ticks:{stroke:TICK_STROKE, width:1, size:5},
+    font:`500 ${narrow ? 12 : 14}px Inter, sans-serif`,
+    size: narrow ? 42 : 54,
+    gap: narrow ? 6 : 8,
+    space: narrow ? 95 : 85,
+    splits: threeHourSplits,
+  };
+  if (withDayLabel){
+    base.values = timeLabels;
   }
   return base;
 }
@@ -717,9 +1049,6 @@ function renderReadout(varName, row, vd, probSeries){
       <span class="sep">·</span>
       <span class="key">spread</span>
       <span class="val">${(SPREADS.find(s=>s.key===cur.spread)||{}).label}</span>
-      <span class="sep">·</span>
-      <span class="key">window</span>
-      <span class="val">${(TIME_RANGES.find(r=>r.key===cur.range)||{}).label}</span>
       ${cur.threshold ? `<span class="sep">·</span><span class="key">threshold</span><span class="val">≥${cur.threshold} ${vd.unit}</span>` : ''}
     `;
     return;
@@ -773,12 +1102,13 @@ function renderEvolution(){
   for (const [varName, meta] of Object.entries(VAR_META)){
     const section = document.createElement('section');
     section.className = 'block';
+    const unit = state.data?.variables?.[varName]?.unit || '';
     section.innerHTML = `
       <div class="block-head">
         <div>
           <div class="block-title" data-var="${varName}">
             <span class="accent-dot"></span>
-            <h2>${meta.label} · run evolution</h2>
+            <h2>${meta.label} · run evolution <span class="unit">${unit}</span></h2>
           </div>
           <div class="block-desc">P50 median from each selected run</div>
         </div>
@@ -929,6 +1259,7 @@ async function loadRun(runId){
     $('age').textContent = fmtAge(data.generated_at);
     $('footerRight').textContent = `run ${fmtRunLabel(runId)} · generated ${data.generated_at}`;
 
+    renderMeteogram(data);
     const charts = $('charts');
     charts.innerHTML = '';
     for (const varName of Object.keys(VAR_META)){
@@ -967,6 +1298,7 @@ async function init(){
       clearTimeout(tmo);
       tmo = setTimeout(() => {
         if (state.data) {
+          renderMeteogram(state.data);
           for (const varName of Object.keys(VAR_META)){
             const vd = state.data.variables[varName];
             if (vd && vd.times.length) drawChart(varName, vd);
