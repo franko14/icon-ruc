@@ -377,7 +377,34 @@ a:hover{text-decoration:underline}
 
 /* Subtle entrance animation for cards */
 @keyframes fadeInUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.header, .meteogram, .block, .evolution-head{animation:fadeInUp 280ms ease both}
+/* ── Forecast summary banner ───────────────────────────── */
+.summary{
+  background:linear-gradient(135deg, var(--precip) 0%, var(--wind) 100%);
+  color:#fff;
+  border-radius:var(--radius);
+  padding:var(--s-5) var(--s-6);
+  margin-bottom:var(--s-5);
+  box-shadow:var(--shadow);
+  font-size:var(--fs-md);
+  font-weight:500;
+  line-height:1.5;
+  letter-spacing:-0.005em;
+}
+.summary .summary-eyebrow{
+  display:block;
+  font-size:var(--fs-xs);
+  font-weight:700;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  opacity:0.8;
+  margin-bottom:var(--s-2);
+}
+.summary .summary-text{display:block}
+@media (max-width:720px){
+  .summary{padding:var(--s-4);font-size:var(--fs-base)}
+}
+
+.header, .summary, .meteogram, .block, .evolution-head{animation:fadeInUp 280ms ease both}
 .block:nth-of-type(1){animation-delay:40ms}
 .block:nth-of-type(2){animation-delay:80ms}
 .block:nth-of-type(3){animation-delay:120ms}
@@ -444,6 +471,10 @@ a:hover{text-decoration:underline}
   </header>
 
   <div id="err" class="err" style="display:none"></div>
+  <div id="summary" class="summary" style="display:none">
+    <span class="summary-eyebrow" id="summaryEyebrow">Forecast summary</span>
+    <span class="summary-text" id="summaryText"></span>
+  </div>
   <div id="meteogram"></div>
   <div id="charts"></div>
   <div id="evolution"></div>
@@ -1244,6 +1275,158 @@ function drawEvolutionChart(varName, selectedRuns){
   evolutionPlots[varName] = new uPlot(opts, data, el);
 }
 
+// ── forecast summary (TTS-friendly) ────────────────────
+function buildSummary(data){
+  const tz = 'Europe/Bratislava';
+  const fmtHour = (iso) => {
+    const s = new Date(iso).toLocaleString('en-US', {
+      timeZone:tz, hour:'numeric', hour12:true,
+    });
+    return s.replace(' ', '').toLowerCase();
+  };
+  const fmtDayHour = (iso) => new Date(iso).toLocaleString('en-GB', {
+    timeZone:tz, weekday:'short', hour:'numeric', hour12:false,
+  });
+  const now = Date.now();
+  const HORIZON_H = 12;
+  const horizonEnd = now + HORIZON_H * 3600 * 1000;
+
+  // Slice a variable's series to the next HORIZON_H hours (from now).
+  const slice = (vd) => {
+    if (!vd || !vd.times || !vd.times.length) return null;
+    const idx = [];
+    for (let i = 0; i < vd.times.length; i++){
+      const t = new Date(vd.times[i]).getTime();
+      if (t >= now - 3600*1000 && t <= horizonEnd) idx.push(i);
+    }
+    if (!idx.length) return null;
+    const pick = (arr) => idx.map(i => arr[i]);
+    return {
+      idx,
+      times: pick(vd.times),
+      p50: vd.percentiles ? pick(vd.percentiles.p50) : null,
+      p90: vd.percentiles ? pick(vd.percentiles.p90) : null,
+      p10: vd.percentiles ? pick(vd.percentiles.p10) : null,
+      prob: vd.probability_exceeds || {},
+      probSlice: (thr) => vd.probability_exceeds && vd.probability_exceeds[thr]
+        ? pick(vd.probability_exceeds[thr]) : null,
+    };
+  };
+
+  const T = slice(data.variables.T_2M);
+  const P = slice(data.variables.TOT_PREC);
+  const W = slice(data.variables.VMAX_10M);
+
+  const parts = [];
+
+  // Temperature — min/max of p50 across horizon, plus unit.
+  if (T && T.p50 && T.p50.length){
+    let tmin = Infinity, tmax = -Infinity, tminI = 0, tmaxI = 0;
+    T.p50.forEach((v, i) => {
+      if (v == null) return;
+      if (v < tmin){ tmin = v; tminI = i; }
+      if (v > tmax){ tmax = v; tmaxI = i; }
+    });
+    const unit = data.variables.T_2M.unit === 'K' ? 'K' : '°C';
+    const toC = (v) => data.variables.T_2M.unit === 'K' ? v - 273.15 : v;
+    const lo = Math.round(toC(tmin));
+    const hi = Math.round(toC(tmax));
+    if (lo === hi){
+      parts.push(`Temperature around ${lo}°C.`);
+    } else {
+      parts.push(`Temperatures between ${lo} and ${hi}°C, coldest around ${fmtHour(T.times[tminI])} and warmest around ${fmtHour(T.times[tmaxI])}.`);
+    }
+  }
+
+  // Precipitation — look for hours where prob of >0.1 mm/h is meaningful.
+  if (P){
+    const pLight = P.probSlice('0.1') || [];
+    const pModerate = P.probSlice('1.0') || [];
+    const pHeavy = P.probSlice('5.0') || [];
+    const maxLight = Math.max(0, ...pLight.map(v => v || 0));
+    const maxMod = Math.max(0, ...pModerate.map(v => v || 0));
+    const maxHeavy = Math.max(0, ...pHeavy.map(v => v || 0));
+    const peakRate = P.p90 ? Math.max(0, ...P.p90.map(v => v || 0)) : 0;
+
+    if (maxLight < 0.15){
+      parts.push('Staying dry.');
+    } else {
+      // Onset: first hour where light-rain probability reaches a meaningful level.
+      let onsetIdx = pLight.findIndex(v => (v || 0) >= 0.3);
+      if (onsetIdx < 0) onsetIdx = pLight.findIndex(v => (v || 0) >= 0.15);
+      const onsetTime = onsetIdx >= 0 ? fmtHour(P.times[onsetIdx]) : null;
+
+      // Peak-probability window: longest/first run of hours with high rain chance.
+      const peakProbIdx = pLight.reduce((best, v, i) =>
+        (v || 0) > (pLight[best] || 0) ? i : best, 0);
+      const peakProbTime = fmtHour(P.times[peakProbIdx]);
+
+      const chancePct = Math.round(maxLight * 100);
+      let intensity, intensityPct;
+      if (maxHeavy >= 0.2){
+        intensity = 'Heavy rain possible';
+        intensityPct = `${Math.round(maxHeavy*100)}% chance of 5 mm per hour or more`;
+      } else if (maxMod >= 0.3){
+        intensity = 'Rain likely';
+        intensityPct = `${Math.round(maxMod*100)}% chance of 1 mm per hour or more`;
+      } else {
+        intensity = 'Light rain possible';
+        intensityPct = `${chancePct}% chance of measurable rain`;
+      }
+
+      let line = `${intensity} — ${intensityPct}`;
+      if (onsetTime && onsetTime !== peakProbTime){
+        line += `, starting around ${onsetTime} and peaking near ${peakProbTime}`;
+      } else if (onsetTime){
+        line += `, starting around ${onsetTime}`;
+      }
+      if (peakRate >= 0.2) line += `, peak intensity near ${peakRate.toFixed(1)} mm per hour`;
+      parts.push(line + '.');
+    }
+  }
+
+  // Wind gusts — max p50 and p90, converted to km/h (more intuitive than m/s for TTS).
+  if (W && W.p50 && W.p50.length){
+    const peakMed = Math.max(0, ...W.p50.map(v => v || 0));
+    const peakHigh = W.p90 ? Math.max(0, ...W.p90.map(v => v || 0)) : peakMed;
+    const peakIdx = W.p50.indexOf(peakMed);
+    const peakKmh = Math.round(peakMed * 3.6);
+    const peakHighKmh = Math.round(peakHigh * 3.6);
+    if (peakHighKmh >= 70){
+      parts.push(`Strong wind gusts up to ${peakHighKmh} km/h around ${fmtHour(W.times[peakIdx])}.`);
+    } else if (peakKmh >= 40){
+      parts.push(`Gusty winds, peaking near ${peakKmh} km/h around ${fmtHour(W.times[peakIdx])}.`);
+    } else if (peakKmh >= 20){
+      parts.push(`Light breeze, gusts up to ${peakKmh} km/h.`);
+    } else {
+      parts.push('Calm winds.');
+    }
+  }
+
+  if (!parts.length) return null;
+
+  const h = new Date().toLocaleString('en-GB', {timeZone:'Europe/Bratislava', hour:'numeric', hour12:false});
+  const hour = parseInt(h, 10);
+  let greeting = '';
+  if (hour >= 4 && hour < 11) greeting = 'Good morning. ';
+
+  return `${greeting}${parts.join(' ')}`;
+}
+
+function renderSummary(data){
+  const box = $('summary');
+  const text = $('summaryText');
+  const eyebrow = $('summaryEyebrow');
+  const summary = buildSummary(data);
+  if (!summary){
+    box.style.display = 'none';
+    return;
+  }
+  text.textContent = summary;
+  eyebrow.textContent = `Forecast summary · next 12 hours · run ${fmtRunLabel(data.run_id)}`;
+  box.style.display = '';
+}
+
 // ── orchestration ──────────────────────────────────────
 async function loadRun(runId){
   clearError();
@@ -1259,6 +1442,7 @@ async function loadRun(runId){
     $('age').textContent = fmtAge(data.generated_at);
     $('footerRight').textContent = `run ${fmtRunLabel(runId)} · generated ${data.generated_at}`;
 
+    renderSummary(data);
     renderMeteogram(data);
     const charts = $('charts');
     charts.innerHTML = '';
